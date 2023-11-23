@@ -12,7 +12,12 @@ export default function FooterSimple() {
           the views or values of the game creator. The content was created by
           various users and may not align with the creator's beliefs or
           identity. If you encounter any offensive material, please
-          <Anchor fz={"xs"} href="https://github.com/creme332/art98/issues">
+          <Anchor
+            fw={800}
+            c={"#9d3333"}
+            fz={"xs"}
+            href="https://github.com/creme332/art98/issues"
+          >
             {` report it `}
           </Anchor>
           for review.
