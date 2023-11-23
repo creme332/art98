@@ -9,7 +9,7 @@ export default function Canvas() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [scale, setScale] = useState(4);
   const canvasSizeInPixels = 300; // number of pixels on canvas will be canvasSizeInPixels * canvasSizeInPixels
-  const canvasColor = "gray";
+  const canvasColor = "white";
   const [pixelColor, setPixelColor] = useState("");
 
   useEffect(() => {
