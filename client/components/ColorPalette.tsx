@@ -37,6 +37,7 @@ export default function ColorPalette({ updatePixelColor }: paletteProps) {
       {colors.map((c, index) => (
         <ColorSwatch
           key={`colorswatch-${c}`}
+          aria-label={`color ${c}`}
           onClick={() => activateColor(index)}
           color={c}
         >

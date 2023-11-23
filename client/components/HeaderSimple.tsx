@@ -15,7 +15,7 @@ export default function HeaderSimple({ playerCount }: { playerCount: number }) {
     <Box pb={50}>
       <header className={classes.header}>
         <Group justify="space-between" h="100%">
-          <Group>
+          <Group aria-label="art98 logo">
             <IconPaint />
             <Text size="xl" fw={900}>
               art98
@@ -42,7 +42,9 @@ export default function HeaderSimple({ playerCount }: { playerCount: number }) {
           </HoverCard>
 
           <Group visibleFrom="sm">
-            <Button variant="default">Log out</Button>
+            <Button aria-label="Log out" variant="default">
+              Log out
+            </Button>
           </Group>
         </Group>
       </header>
