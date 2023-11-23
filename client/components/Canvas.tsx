@@ -1,7 +1,7 @@
 import styles from "../styles/Canvas.module.css";
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 import React, { useEffect, useRef, useState } from "react";
-import { Group, ActionIcon, Stack } from "@mantine/core";
+import { Group, ActionIcon, Stack, Button, Tooltip } from "@mantine/core";
 import { IconZoomIn, IconZoomOut, IconZoomReset } from "@tabler/icons-react";
 import ColorPalette from "./ColorPalette";
 
@@ -10,7 +10,7 @@ export default function Canvas() {
   const [scale, setScale] = useState(4);
   const canvasSizeInPixels = 300; // number of pixels on canvas will be canvasSizeInPixels * canvasSizeInPixels
   const canvasColor = "white";
-  const [pixelColor, setPixelColor] = useState("");
+  const [selectedPixelColor, setSelectedPixelColor] = useState("");
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -48,16 +48,17 @@ export default function Canvas() {
     const y = Math.floor((e.clientY - rect.top) / scale);
     console.log("x: " + x + " y: " + y);
 
-    plotPixel(x, y);
+    plotPixel(x, y, selectedPixelColor);
   }
 
   /**
    * Plots a pixel (a unit square) on the canvas
    * @param x row number of pixel
    * @param y column number of pixel
+   * @param color HEX code for color of pixel
    * @returns
    */
-  function plotPixel(x: number, y: number) {
+  function plotPixel(x: number, y: number, color: string) {
     const pixelSize: number = 1;
 
     // validate parameters
@@ -70,7 +71,7 @@ export default function Canvas() {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    ctx.fillStyle = pixelColor;
+    ctx.fillStyle = color;
     ctx.fillRect(x, y, pixelSize, pixelSize);
   }
 
@@ -84,10 +85,18 @@ export default function Canvas() {
 
   function updatePixelColor(hexColor: string) {
     if (hexColor.length !== 7) {
-      setPixelColor("black");
+      setSelectedPixelColor("black");
     } else {
-      setPixelColor(hexColor);
+      setSelectedPixelColor(hexColor);
     }
+  }
+
+  function clearCanvas() {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
   }
 
   const canvasElement = (
@@ -117,39 +126,45 @@ export default function Canvas() {
         <Stack>
           <Group justify="space-between">
             <Group>
-              <ActionIcon
-                onClick={() => zoomIn()}
-                variant="light"
-                aria-label="Zoom in"
-                color="black"
-              >
-                <IconZoomIn
-                  style={{ width: "70%", height: "70%" }}
-                  stroke={2}
-                />
-              </ActionIcon>
-              <ActionIcon
-                onClick={() => zoomOut()}
-                variant="light"
-                aria-label="Zoom out"
-                color="black"
-              >
-                <IconZoomOut
-                  style={{ width: "70%", height: "70%" }}
-                  stroke={2}
-                />
-              </ActionIcon>
-              <ActionIcon
-                onClick={() => resetTransform()}
-                variant="light"
-                aria-label="Zoom reset"
-                color="black"
-              >
-                <IconZoomReset
-                  style={{ width: "70%", height: "70%" }}
-                  stroke={2}
-                />
-              </ActionIcon>
+              <Tooltip label="Zoom in">
+                <ActionIcon
+                  onClick={() => zoomIn()}
+                  variant="light"
+                  aria-label="Zoom in"
+                  color="black"
+                >
+                  <IconZoomIn
+                    style={{ width: "70%", height: "70%" }}
+                    stroke={2}
+                  />
+                </ActionIcon>
+              </Tooltip>
+              <Tooltip label="Zoom out">
+                <ActionIcon
+                  onClick={() => zoomOut()}
+                  variant="light"
+                  aria-label="Zoom out"
+                  color="black"
+                >
+                  <IconZoomOut
+                    style={{ width: "70%", height: "70%" }}
+                    stroke={2}
+                  />
+                </ActionIcon>
+              </Tooltip>
+              <Tooltip label="Zoom reset">
+                <ActionIcon
+                  onClick={() => resetTransform()}
+                  variant="light"
+                  aria-label="Zoom reset"
+                  color="black"
+                >
+                  <IconZoomReset
+                    style={{ width: "70%", height: "70%" }}
+                    stroke={2}
+                  />
+                </ActionIcon>
+              </Tooltip>
             </Group>
             <ColorPalette updatePixelColor={updatePixelColor} />
           </Group>
@@ -163,6 +178,14 @@ export default function Canvas() {
           >
             {canvasElement}
           </TransformComponent>
+          <Button
+            aria-label="Clear canvas"
+            onClick={clearCanvas}
+            variant="light"
+            color="red"
+          >
+            Clear canvas
+          </Button>
         </Stack>
       )}
     </TransformWrapper>
