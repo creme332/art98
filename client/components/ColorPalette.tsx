@@ -16,7 +16,7 @@ export default function ColorPalette({ updatePixelColor }: paletteProps) {
     "#008000",
     "#00FFFF",
     "#0000FF",
-    " #800080",
+    "#800080",
   ];
   const [activeColorIndex, setActiveColor] = useState(-1);
 
@@ -46,7 +46,7 @@ export default function ColorPalette({ updatePixelColor }: paletteProps) {
               style={{
                 width: rem(12),
                 height: rem(12),
-                outline: "1px solid white",
+                color: "white",
               }}
             />
           )}
