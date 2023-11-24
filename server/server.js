@@ -30,6 +30,8 @@ app.use("/", indexRouter);
 app.use("/users", usersRouter);
 
 // socket.io stuffs
+let userCount = 0;
+
 const io = require("socket.io")(server, {
   cors: {
     origin: "http://localhost:3000",
@@ -38,7 +40,11 @@ const io = require("socket.io")(server, {
 });
 
 io.on("connection", (socket) => {
-  console.log("a user connected");
+  console.log(`user ${socket.id} connected`);
+  userCount++;
+  io.emit("userCount", userCount);
+
+  // console.log(socket.handshake.auth); // get data defined by client
 
   //Listens and logs the message to the console
   socket.on("message", (data) => {
@@ -49,7 +55,9 @@ io.on("connection", (socket) => {
   });
 
   socket.on("disconnect", () => {
-    console.log("user disconnected");
+    userCount--;
+    console.log(`user ${socket.id} connected`);
+    io.emit("userCount", userCount);
   });
 });
 

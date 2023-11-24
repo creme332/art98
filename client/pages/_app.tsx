@@ -37,7 +37,7 @@ export default function App({ Component, pageProps }: AppProps) {
         />
         <title>art98</title>
       </Head>
-      <HeaderSimple playerCount={2} />
+      <HeaderSimple socket={socket} />
       <Component {...pageProps} socket={socket} />
       <Footer />
     </MantineProvider>

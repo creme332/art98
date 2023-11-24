@@ -4,6 +4,12 @@ export interface appProps {
   socket: Socket<ServerToClientEvents, ClientToServerEvents>;
 }
 
+export interface pixelProps {
+  x: number;
+  y: number;
+  color: string;
+}
+
 // ------- start of socketio types ----------
 // Reference: https://socket.io/docs/v4/typescript/#types-for-the-server
 
@@ -14,14 +20,15 @@ export interface ServerToClientEvents {
   noArg: () => void;
   basicEmit: (a: number, b: string, c: Buffer) => void;
   withAck: (d: string, callback: (e: number) => void) => void;
-  messageResponse: (a: string) => void;
+  messageResponse: (a: pixelProps) => void;
+  userCount: (a: number) => void;
 }
 
 /**
  * Used when receiving events on server or when sending events from client
  */
 export interface ClientToServerEvents {
-  message: (a: string) => void;
+  message: (pixel: pixelProps) => void;
 }
 
 /**
