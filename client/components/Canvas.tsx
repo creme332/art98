@@ -4,8 +4,9 @@ import React, { useEffect, useRef, useState } from "react";
 import { Group, ActionIcon, Stack, Button, Tooltip, Text } from "@mantine/core";
 import { IconZoomIn, IconZoomOut, IconZoomReset } from "@tabler/icons-react";
 import ColorPalette from "./ColorPalette";
+import { appProps } from "../common/types";
 
-export default function Canvas() {
+export default function Canvas({ socket }: appProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [scale, setScale] = useState(4);
   const canvasSizeInPixels = 300; // number of pixels on canvas will be canvasSizeInPixels * canvasSizeInPixels
@@ -14,6 +15,7 @@ export default function Canvas() {
   const [cursorOnCanvas, setCursorOnCanvas] = useState(false); // is cursor on canvas
   const [coordinates, setCoordinates] = useState("");
 
+  // When canvas component has loaded, initialise everything
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -30,6 +32,12 @@ export default function Canvas() {
     drawArt();
     // TODO: use imageData to fill canvas initially
   }, []);
+
+  useEffect(() => {
+    console.log(socket);
+    if (!socket) return;
+    socket.on("messageResponse", (data) => console.log(data));
+  }, [socket]);
 
   function handleClick(e: React.MouseEvent<Element, MouseEvent>) {
     // Detect right click only
@@ -53,6 +61,8 @@ export default function Canvas() {
     console.log("x: " + x + " y: " + y);
 
     plotPixel(x, y, selectedPixelColor);
+
+    socket.emit("message", "bruuh");
   }
 
   /**

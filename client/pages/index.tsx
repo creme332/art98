@@ -1,10 +1,10 @@
 import { Container } from "@mantine/core";
 import Canvas from "../components/Canvas";
-
-export default function IndexPage() {
+import { appProps } from "../common/types";
+export default function IndexPage({ socket }: appProps) {
   return (
     <Container>
-      <Canvas />
+      <Canvas socket={socket} />
     </Container>
   );
 }

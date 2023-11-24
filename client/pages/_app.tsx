@@ -4,6 +4,7 @@ import { MantineProvider } from "@mantine/core";
 import { theme } from "../theme";
 import HeaderSimple from "../components/HeaderSimple";
 import Footer from "../components/FooterSimple";
+import { io } from "socket.io-client";
 
 interface AppProps {
   Component: () => JSX.Element;
@@ -11,6 +12,16 @@ interface AppProps {
 }
 
 export default function App({ Component, pageProps }: AppProps) {
+  const socket = io("localhost:4000/", {
+    reconnectionDelayMax: 10000,
+    auth: {
+      token: "123",
+    },
+    query: {
+      "my-key": "my-value",
+    },
+  });
+
   return (
     <MantineProvider theme={theme}>
       <Head>
@@ -27,7 +38,7 @@ export default function App({ Component, pageProps }: AppProps) {
         <title>art98</title>
       </Head>
       <HeaderSimple playerCount={2} />
-      <Component {...pageProps} />
+      <Component {...pageProps} socket={socket} />
       <Footer />
     </MantineProvider>
   );
