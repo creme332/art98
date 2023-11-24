@@ -11,9 +11,9 @@ export default function Canvas({ socket }: appProps) {
   const [scale, setScale] = useState(4);
   const canvasSizeInPixels = 300; // number of pixels on canvas will be canvasSizeInPixels * canvasSizeInPixels
   const canvasColor = "white";
-  const [selectedPixelColor, setSelectedPixelColor] = useState("");
-  const [cursorOnCanvas, setCursorOnCanvas] = useState(false); // is cursor on canvas
-  const [coordinates, setCoordinates] = useState("");
+  const [selectedPixelColor, setSelectedPixelColor] = useState(""); // color of paintbrush
+  const [coordinates, setCoordinates] = useState(""); // coordinates of cursor position on canvas
+  const [drawing, setDrawing] = useState(false); // is user currently drawing
 
   // When canvas component has loaded, initialise everything
   useEffect(() => {
@@ -29,40 +29,26 @@ export default function Canvas({ socket }: appProps) {
 
     console.log(ctx.getImageData(0, 0, canvasSizeInPixels, canvasSizeInPixels));
     // plotPixel(0, 0);
-    drawArt();
+    // drawArt();
     // TODO: use imageData to fill canvas initially
   }, []);
 
+  // when server sends canva updates, refresh canvas
   useEffect(() => {
-    console.log(socket);
-    if (!socket) return;
-    socket.on("messageResponse", (data) => console.log(data));
+    socket.on("messageResponse", (data) =>
+      plotPixel(data.x, data.y, data.color)
+    );
   }, [socket]);
 
-  function handleClick(e: React.MouseEvent<Element, MouseEvent>) {
-    // Detect right click only
-    if (e.type !== "contextmenu") {
-      return;
-    }
+  function handleDraw(e: React.MouseEvent<Element, MouseEvent>) {
+    if (!drawing) return;
+    const [x, y] = getCanvasCursorCoordinates(e);
 
-    e.preventDefault();
-    e.stopPropagation();
-
-    console.log(e);
-
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const rect = canvas.getBoundingClientRect();
-
-    // calculate coordinates clicked on grid, taking scale into consideration
-    const x = Math.floor((e.clientX - rect.left) / scale);
-    const y = Math.floor((e.clientY - rect.top) / scale);
-    console.log("x: " + x + " y: " + y);
-
+    // plot pixel on canvas
     plotPixel(x, y, selectedPixelColor);
 
-    socket.emit("message", "bruuh");
+    // inform server of changes
+    socket.emit("message", { x, y, color: selectedPixelColor });
   }
 
   /**
@@ -89,6 +75,10 @@ export default function Canvas({ socket }: appProps) {
     ctx.fillRect(x, y, pixelSize, pixelSize);
   }
 
+  /**
+   * Save scale factor when user is zooming in/out
+   * @param e event
+   */
   function handleScaleChange(e: {
     instance: { transformState: { scale: any } };
   }) {
@@ -125,9 +115,17 @@ export default function Canvas({ socket }: appProps) {
     }
   }
 
-  function displayLiveCoordinates(e: React.MouseEvent<Element, MouseEvent>) {
+  /**
+   * Calculate coordinates of mouse event on canvas, taking scale factor into consideration.
+   * @param e Mouse event
+   * @returns An array of size 2 where first element is row index and second element is column index.
+   * Array may be equal to [-1, -1] in the case where canvas is null.
+   */
+  function getCanvasCursorCoordinates(
+    e: React.MouseEvent<Element, MouseEvent>
+  ) {
     const canvas = canvasRef.current;
-    if (!canvas) return;
+    if (!canvas) return [-1, -1];
 
     const rect = canvas.getBoundingClientRect();
 
@@ -135,45 +133,78 @@ export default function Canvas({ socket }: appProps) {
     const x = Math.floor((e.clientX - rect.left) / scale);
     const y = Math.floor((e.clientY - rect.top) / scale);
 
+    return [x, y];
+  }
+
+  /**
+   * Updates cursor coordinates
+   * @param e Mouse event
+   */
+  function displayLiveCoordinates(e: React.MouseEvent<Element, MouseEvent>) {
+    const [x, y] = getCanvasCursorCoordinates(e);
     const formattedString = `(${x}, ${y})`;
     setCoordinates(formattedString);
   }
 
   function clearCanvas() {
+    // ask for confirmation before clearing canvas
     if (
       !confirm("Are you sure to reset the canvas? This action is irreversible.")
     )
       return;
+
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    // TODO: Inform server
   }
 
   const canvasElement = (
     <canvas
       height={canvasSizeInPixels}
       width={canvasSizeInPixels}
-      onMouseDown={(event) => {
-        // disable panning and zooming for right mouse click
-        if (event.button == 2) {
-          event.preventDefault();
-          event.stopPropagation();
-        }
-      }}
       onMouseEnter={(e) => {
-        setCursorOnCanvas(true);
-        displayLiveCoordinates(e);
+        // mouse entered canvas
+        displayLiveCoordinates(e); // show live cursor coordinates
       }}
       onMouseMove={(e) => {
-        if (!cursorOnCanvas) {
-          return;
-        }
         displayLiveCoordinates(e);
+
+        if (drawing) {
+          // plot pixels on right mouse hold
+          handleDraw(e);
+        }
       }}
-      onMouseLeave={() => setCursorOnCanvas(false)}
-      onContextMenu={handleClick}
+      onMouseDown={(event) => {
+        // check if right mouse button is clicked
+        if (event.button == 2) {
+          // disable panning and zooming for right mouse click
+          event.preventDefault();
+          event.stopPropagation();
+
+          setDrawing(true); // allow drawing
+        }
+      }}
+      onMouseUp={(event) => {
+        // check if right mouse button is released on canvas
+        if (event.button == 2) {
+          setDrawing(false);
+        }
+      }}
+      onMouseLeave={() => {
+        setDrawing(false);
+      }}
+      onContextMenu={(e) => {
+        //  This function allows user to draw a single pixel while mouse is not moving.
+
+        // Prevent context menu from opening
+        e.preventDefault();
+        e.stopPropagation();
+
+        handleDraw(e);
+      }}
       className={styles.canva}
       ref={canvasRef}
     />
