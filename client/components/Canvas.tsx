@@ -15,7 +15,7 @@ export default function Canvas({ socket }: appProps) {
   const [coordinates, setCoordinates] = useState(""); // coordinates of cursor position on canvas
   const [drawing, setDrawing] = useState(false); // is user currently drawing
 
-  // When canvas component has loaded, initialise everything
+  // When canvas component has loaded, initialize everything
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -33,7 +33,7 @@ export default function Canvas({ socket }: appProps) {
     // TODO: use imageData to fill canvas initially
   }, []);
 
-  // when server sends canva updates, refresh canvas
+  // when server sends canvas updates, refresh canvas
   useEffect(() => {
     socket.on("messageResponse", (data) =>
       plotPixel(data.x, data.y, data.color)
@@ -41,7 +41,6 @@ export default function Canvas({ socket }: appProps) {
   }, [socket]);
 
   function handleDraw(e: React.MouseEvent<Element, MouseEvent>) {
-    if (!drawing) return;
     const [x, y] = getCanvasCursorCoordinates(e);
 
     // plot pixel on canvas
@@ -177,14 +176,17 @@ export default function Canvas({ socket }: appProps) {
           handleDraw(e);
         }
       }}
-      onMouseDown={(event) => {
+      onMouseDown={(e) => {
         // check if right mouse button is clicked
-        if (event.button == 2) {
+        if (e.button == 2) {
           // disable panning and zooming for right mouse click
-          event.preventDefault();
-          event.stopPropagation();
+          e.preventDefault();
+          e.stopPropagation();
+
+          console.log("Mouse down");
 
           setDrawing(true); // allow drawing
+          handleDraw(e);
         }
       }}
       onMouseUp={(event) => {
@@ -198,12 +200,14 @@ export default function Canvas({ socket }: appProps) {
       }}
       onContextMenu={(e) => {
         //  This function allows user to draw a single pixel while mouse is not moving.
-
         // Prevent context menu from opening
         e.preventDefault();
         e.stopPropagation();
+        console.log(e);
 
+        setDrawing(true);
         handleDraw(e);
+        setDrawing(false);
       }}
       className={styles.canva}
       ref={canvasRef}
