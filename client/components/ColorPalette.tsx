@@ -1,5 +1,5 @@
 import { Group, ColorSwatch, CheckIcon, rem } from "@mantine/core";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface paletteProps {
   updatePixelColor: (hexColor: string) => void;
@@ -18,8 +18,12 @@ export default function ColorPalette({ updatePixelColor }: paletteProps) {
     "#0000FF",
     "#800080",
   ];
-  const [activeColorIndex, setActiveColor] = useState(-1);
+  const [activeColorIndex, setActiveColor] = useState(0);
 
+  useEffect(() => {
+    updatePixelColor(colors[activeColorIndex]);
+  }, []);
+  
   function activateColor(index: number) {
     if (index === activeColorIndex) {
       // unselect current color
