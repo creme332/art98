@@ -46,7 +46,7 @@ export default function RegistrationForm() {
         },
         body: JSON.stringify(values),
       });
-      const json = response.json();
+      const json = await response.json();
       console.log(json);
     } catch (error) {}
   }
