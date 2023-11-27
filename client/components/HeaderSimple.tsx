@@ -11,6 +11,7 @@ import { IconPaint } from "@tabler/icons-react";
 import { IconLock } from "@tabler/icons-react";
 import { appProps } from "../common/types";
 import { useEffect, useState } from "react";
+import { BACKEND_URL } from "../common/constants";
 
 export default function HeaderSimple({ socket }: appProps) {
   const [playerCount, setPlayerCount] = useState(0);
@@ -20,6 +21,16 @@ export default function HeaderSimple({ socket }: appProps) {
       setPlayerCount(data);
     });
   }, [socket]);
+
+  async function handleLogOut() {
+    try {
+      const response = await fetch(`${BACKEND_URL}/auth/logout`, {
+        method: "POST",
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  }
 
   return (
     <Box pb={50}>
@@ -52,7 +63,11 @@ export default function HeaderSimple({ socket }: appProps) {
           </HoverCard>
 
           <Group visibleFrom="sm">
-            <Button aria-label="Log out" variant="default">
+            <Button
+              onClick={handleLogOut}
+              aria-label="Log out"
+              variant="default"
+            >
               Log out
             </Button>
           </Group>
