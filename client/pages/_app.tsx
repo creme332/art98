@@ -2,9 +2,6 @@ import "@mantine/core/styles.css";
 import Head from "next/head";
 import { MantineProvider } from "@mantine/core";
 import { theme } from "../theme";
-import HeaderSimple from "../components/HeaderSimple";
-import Footer from "../components/FooterSimple";
-import { io } from "socket.io-client";
 
 interface AppProps {
   Component: () => JSX.Element;
@@ -12,19 +9,6 @@ interface AppProps {
 }
 
 export default function App({ Component, pageProps }: AppProps) {
-  const env = process.env.NODE_ENV;
-  const BACKEND_URL =
-    env === "development" ? "localhost:4000" : "https://art98.vercel.app";
-  const socket = io(BACKEND_URL, {
-    reconnectionDelayMax: 10000,
-    auth: {
-      token: "123",
-    },
-    query: {
-      "my-key": "my-value",
-    },
-  });
-
   return (
     <MantineProvider theme={theme}>
       <Head>
@@ -40,7 +24,7 @@ export default function App({ Component, pageProps }: AppProps) {
         />
         <title>art98</title>
       </Head>
-      <Component {...pageProps} socket={socket} />
+      <Component {...pageProps} />
     </MantineProvider>
   );
 }
