@@ -1,12 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const passport = require("passport");
-const LocalStrategy = require("passport-local");
 const signUpController = require("../controllers/sign_up_controller");
-
-router.get("/register", (req, res, next) => {
-  res.json({ message: "works" });
-});
 
 router.post("/register", signUpController.create_new_user);
 
@@ -14,9 +9,23 @@ router.post("/register", signUpController.create_new_user);
 router.post(
   "/login",
   passport.authenticate("local", {
-    successRedirect: "/",
-    failureRedirect: "/login",
-  })
+    failureRedirect: false,
+    failureMessage: true,
+  }),
+  (req, res) => {
+    // console.log(req);
+    return res.json({ message: "Success" });
+  }
 );
+
+/* Deal with user log out*/
+router.post("/logout", function (req, res, next) {
+  req.logout(function (err) {
+    if (err) {
+      return next(err);
+    }
+    return res.send();
+  });
+});
 
 module.exports = router;

@@ -11,6 +11,9 @@ const logger = require("morgan");
 const cors = require("cors");
 const mongoose = require("mongoose");
 
+const indexRouter = require("./routes/index");
+const authRouter = require("./routes/auth");
+
 // connect to mongodb
 mongoose.set("strictQuery", false);
 main().catch((err) => console.log(err));
@@ -25,15 +28,76 @@ server.on("listening", () => {
   console.log(`Listening on http://localhost:${port}/`);
 });
 
-const indexRouter = require("./routes/index");
-const authRouter = require("./routes/auth");
-
 app.use(cors());
 app.use(logger("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "public")));
+
+// passport js
+const User = require("./models/user");
+const LocalStrategy = require("passport-local").Strategy;
+const passport = require("passport");
+const bcrypt = require("bcryptjs");
+const session = require("express-session");
+
+app.use(session({ secret: "cats", resave: false, saveUninitialized: true }));
+app.use(passport.initialize());
+app.use(passport.session());
+
+passport.use(
+  new LocalStrategy(
+    {
+      //https://stackoverflow.com/questions/34511021/passport-js-missing-credentials
+      usernameField: "email",
+      passwordField: "password",
+    },
+    async (username, password, done) => {
+      console.log(username, password);
+
+      try {
+        const user = await User.findOne({ email: username });
+        if (!user) {
+          return done(null, false, { message: "Incorrect username" });
+        }
+        console.log("User valid");
+
+        const match = await bcrypt.compare(password, user.password);
+
+        if (!match) {
+          console.log("Passwords invalid");
+          // passwords do not match!
+          return done(null, false, { message: "Incorrect password" });
+        }
+        console.log("Passwords valid");
+        return done(null, user);
+      } catch (err) {
+        return done(err);
+      }
+    }
+  )
+);
+
+passport.serializeUser((user, done) => {
+  console.log(`user logged in: ${user.id}`);
+
+  done(null, user.id);
+});
+
+passport.deserializeUser(async (id, done) => {
+  console.log(`user logged out`);
+
+  try {
+    const user = await User.findById(id);
+    done(null, user);
+  } catch (err) {
+    done(err);
+  }
+});
+
+// routes
+// ! Place routes after using passport session to avoid error related to middleware
 app.use("/", indexRouter);
 app.use("/auth", authRouter);
 
@@ -43,6 +107,7 @@ let userCount = 0;
 const io = require("socket.io")(server, {
   cors: {
     origin: "http://localhost:3000",
+    credentials: true,
     methods: ["GET", "POST"],
   },
 });
@@ -64,7 +129,7 @@ io.on("connection", (socket) => {
 
   socket.on("disconnect", () => {
     userCount--;
-    console.log(`user ${socket.id} connected`);
+    console.log(`user ${socket.id} disconnected`);
     io.emit("userCount", userCount);
   });
 });
