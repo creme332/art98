@@ -12,9 +12,11 @@ import { IconLock } from "@tabler/icons-react";
 import { appProps } from "../common/types";
 import { useEffect, useState } from "react";
 import { BACKEND_URL } from "../common/constants";
+import { useRouter } from "next/router";
 
 export default function HeaderSimple({ socket }: appProps) {
   const [playerCount, setPlayerCount] = useState(0);
+  const router = useRouter();
 
   useEffect(() => {
     socket.on("userCount", (data) => {
@@ -27,6 +29,8 @@ export default function HeaderSimple({ socket }: appProps) {
       const response = await fetch(`${BACKEND_URL}/auth/logout`, {
         method: "POST",
       });
+      console.log(response);
+      if (response.ok) router.push("/login");
     } catch (error) {
       console.log(error);
     }
