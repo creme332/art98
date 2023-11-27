@@ -1,0 +1,16 @@
+.wrapper {
+  display: grid;
+  place-items: center;
+  height: 100vh;
+
+  background-size: cover;
+  background-image: url("/place.webp");
+}
+
+.form {
+  min-width: 300px;
+  width: 30%;
+  @media (max-width: $mantine-breakpoint-sm) {
+    width: 100%;
+  }
+}
