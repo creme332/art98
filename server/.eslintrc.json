@@ -10,6 +10,15 @@
   },
   "rules": {
     "quotes": ["error", "double"],
-    "object-curly-spacing": "off"
+    "object-curly-spacing": "off",
+    "valid-jsdoc": [
+      "error",
+      {
+        "prefer": {
+          "return": "returns"
+        }
+      },
+      { "requireReturn": "false" }
+    ]
   }
 }
