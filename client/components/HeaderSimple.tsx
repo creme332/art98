@@ -30,7 +30,10 @@ export default function HeaderSimple({ socket }: appProps) {
         method: "POST",
       });
       console.log(response);
-      if (response.ok) router.push("/login");
+      if (response.ok) {
+        socket.disconnect();
+        router.push("/login");
+      }
     } catch (error) {
       console.log(error);
     }
