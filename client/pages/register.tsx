@@ -47,8 +47,10 @@ export default function RegistrationForm() {
         body: JSON.stringify(values),
       });
       const json = await response.json();
-      console.log(json);
-    } catch (error) {}
+      window.alert(json.error);
+    } catch (error) {
+      window.alert(error);
+    }
   }
   return (
     <div className={classes.wrapper}>
