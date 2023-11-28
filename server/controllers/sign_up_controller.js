@@ -17,7 +17,7 @@ exports.create_new_user = asyncHandler(async (req, res, next) => {
         console.log(result);
         res.redirect("/");
       } catch (err) {
-        return next(err);
+        return res.status(401).send({ error: JSON.stringify(err) });
       }
     }
   });
