@@ -20,11 +20,15 @@ interface loginDetails {
   password: string;
 }
 
-export default function AuthenticationForm() {
+interface pageProps {
+  setLoggedIn: (status: boolean) => void;
+}
+
+export default function AuthenticationForm({ setLoggedIn }: pageProps) {
   const router = useRouter();
   const [values, setValues] = useState<loginDetails>({
-    email: "",
-    password: "",
+    email: "aaaaaa",
+    password: "aaaaaa",
   });
 
   async function submitHandler(e: SyntheticEvent) {
@@ -39,13 +43,20 @@ export default function AuthenticationForm() {
         },
         body: JSON.stringify(values),
       });
+      console.log(response);
 
       if (response.ok) {
-        router.push("/");
+        setLoggedIn(true);
+        return router.push("/canvas");
       }
-      const json = (await response).json();
+      // error
+      const json = await response.json();
       console.log(json);
-    } catch (error) {}
+      window.alert(json.error);
+    } catch (error) {
+      window.alert(error);
+      console.log(error);
+    }
   }
 
   return (
@@ -57,6 +68,7 @@ export default function AuthenticationForm() {
         <form onSubmit={submitHandler}>
           <Stack>
             <TextInput
+              defaultValue={" "}
               required
               label="Email"
               placeholder="hello@mantine.dev"
@@ -64,6 +76,7 @@ export default function AuthenticationForm() {
               onChange={(e) => setValues({ ...values, email: e.target.value })}
             />
             <PasswordInput
+              defaultValue={" "}
               required
               label="Password"
               placeholder="Your password"
