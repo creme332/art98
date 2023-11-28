@@ -53,13 +53,13 @@ passport.use(
       usernameField: "email",
       passwordField: "password",
     },
-    async (username, password, done) => {
-      console.log(username, password);
+    async (email, password, done) => {
+      console.log(email, password);
 
       try {
-        const user = await User.findOne({ email: username });
+        const user = await User.findOne({ email });
         if (!user) {
-          return done(null, false, { message: "Incorrect username" });
+          return done(null, false, { error: "Email does not exist." });
         }
         console.log("User valid");
 
@@ -68,7 +68,7 @@ passport.use(
         if (!match) {
           console.log("Passwords invalid");
           // passwords do not match!
-          return done(null, false, { message: "Incorrect password" });
+          return done(null, false, { error: "Invalid password." });
         }
         console.log("Passwords valid");
         return done(null, user);
