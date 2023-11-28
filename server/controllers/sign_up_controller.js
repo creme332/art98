@@ -12,6 +12,7 @@ exports.create_new_user = asyncHandler(async (req, res, next) => {
           email: req.body.email,
           name: req.body.name,
           password: hashedPassword,
+          type: req.body.type,
         });
         const result = await user.save();
         console.log(result);
