@@ -2,6 +2,7 @@ import "@mantine/core/styles.css";
 import Head from "next/head";
 import { MantineProvider } from "@mantine/core";
 import { theme } from "../theme";
+import { useState } from "react";
 
 interface AppProps {
   Component: () => JSX.Element;
@@ -9,6 +10,12 @@ interface AppProps {
 }
 
 export default function App({ Component, pageProps }: AppProps) {
+  const [loggedIn, setLoggedIn] = useState<boolean>(false);
+
+  function updateLoginStatus(status: boolean) {
+    setLoggedIn(status);
+  }
+
   return (
     <MantineProvider theme={theme}>
       <Head>
@@ -24,7 +31,11 @@ export default function App({ Component, pageProps }: AppProps) {
         />
         <title>art98</title>
       </Head>
-      <Component {...pageProps} />
+      <Component
+        {...pageProps}
+        loggedIn={loggedIn}
+        setLoggedIn={updateLoginStatus}
+      />
     </MantineProvider>
   );
 }
