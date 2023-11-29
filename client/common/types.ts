@@ -1,5 +1,13 @@
 import { Socket } from "socket.io-client";
 
+export interface User {
+  type: "basic" | "premium" | "admin";
+  email: string;
+  name: string;
+  password: string;
+}
+
+//TODO: Delete below
 export interface appProps {
   socket: Socket<ServerToClientEvents, ClientToServerEvents>;
 }
