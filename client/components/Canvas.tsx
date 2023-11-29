@@ -4,9 +4,13 @@ import React, { useEffect, useRef, useState } from "react";
 import { Group, ActionIcon, Stack, Button, Tooltip, Text } from "@mantine/core";
 import { IconZoomIn, IconZoomOut, IconZoomReset } from "@tabler/icons-react";
 import ColorPalette from "./ColorPalette";
-import { appProps } from "../common/types";
+import { socket } from "../common/socket";
 
-export default function Canvas({ socket }: appProps) {
+interface pageProps {
+  loggedIn: boolean;
+}
+
+export default function Canvas({ loggedIn }: pageProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [scale, setScale] = useState(4);
   const canvasSizeInPixels = 300; // number of pixels on canvas will be canvasSizeInPixels * canvasSizeInPixels
@@ -17,6 +21,14 @@ export default function Canvas({ socket }: appProps) {
 
   // When canvas component has loaded, initialize everything
   useEffect(() => {
+    if (!loggedIn) return;
+
+    // setup socket
+    socket.connect();
+    socket.on("messageResponse", (data) =>
+      plotPixel(data.x, data.y, data.color)
+    );
+
     const canvas = canvasRef.current;
     if (!canvas) return;
 
@@ -27,18 +39,14 @@ export default function Canvas({ socket }: appProps) {
     ctx.fillStyle = canvasColor;
     ctx.fillRect(0, 0, canvasSizeInPixels, canvasSizeInPixels);
 
-    console.log(ctx.getImageData(0, 0, canvasSizeInPixels, canvasSizeInPixels));
-    // plotPixel(0, 0);
+    // console.log(ctx.getImageData(0, 0, canvasSizeInPixels, canvasSizeInPixels));
     // drawArt();
     // TODO: use imageData to fill canvas initially
-  }, []);
 
-  // when server sends canvas updates, refresh canvas
-  useEffect(() => {
-    socket.on("messageResponse", (data) =>
-      plotPixel(data.x, data.y, data.color)
-    );
-  }, [socket]);
+    return () => {
+      socket.disconnect();
+    };
+  }, [loggedIn]);
 
   function handleDraw(e: React.MouseEvent<Element, MouseEvent>) {
     const [x, y] = getCanvasCursorCoordinates(e);

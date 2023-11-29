@@ -9,20 +9,33 @@ import {
 import classes from "../styles/HeaderSimple.module.css";
 import { IconPaint } from "@tabler/icons-react";
 import { IconLock } from "@tabler/icons-react";
-import { appProps } from "../common/types";
 import { useEffect, useState } from "react";
 import { BACKEND_URL } from "../common/constants";
 import { useRouter } from "next/router";
+import { socket } from "../common/socket";
 
-export default function HeaderSimple({ socket }: appProps) {
+interface headerProps {
+  loggedIn: boolean;
+}
+
+export default function HeaderSimple({ loggedIn }: headerProps) {
   const [playerCount, setPlayerCount] = useState(0);
   const router = useRouter();
 
   useEffect(() => {
-    socket.on("userCount", (data) => {
-      setPlayerCount(data);
-    });
-  }, [socket]);
+    // check if user logged in
+    if (loggedIn) {
+      socket.connect();
+      socket.on("userCount", (data) => {
+        console.log("called");
+        setPlayerCount(data);
+      });
+    }
+
+    return () => {
+      socket.disconnect();
+    };
+  }, [loggedIn]);
 
   async function handleLogOut() {
     try {
