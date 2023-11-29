@@ -25,9 +25,11 @@ export default function Canvas({ loggedIn }: pageProps) {
 
     // setup socket
     socket.connect();
-    socket.on("messageResponse", (data) =>
-      plotPixel(data.x, data.y, data.color)
-    );
+    socket.on("messageResponse", (data) => {
+      const x = Math.floor(data.position / canvasSizeInPixels);
+      const y = data.position % canvasSizeInPixels;
+      plotPixel(x, y, data.color);
+    });
 
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -55,7 +57,10 @@ export default function Canvas({ loggedIn }: pageProps) {
     plotPixel(x, y, selectedPixelColor);
 
     // inform server of changes
-    socket.emit("message", { x, y, color: selectedPixelColor });
+    socket.emit("message", {
+      position: canvasSizeInPixels * x + y,
+      color: selectedPixelColor,
+    });
   }
 
   /**

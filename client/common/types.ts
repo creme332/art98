@@ -5,8 +5,7 @@ export interface appProps {
 }
 
 export interface pixelProps {
-  x: number;
-  y: number;
+  position: number;
   color: string;
 }
 
