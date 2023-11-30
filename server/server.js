@@ -17,6 +17,10 @@ const authRouter = require("./routes/auth");
 // connect to mongodb
 mongoose.set("strictQuery", false);
 main().catch((err) => console.log(err));
+
+/**
+ * Connect to mongoDB
+ */
 async function main() {
   await mongoose.connect(process.env.MONGO_STRING);
 }
@@ -49,7 +53,7 @@ app.use(passport.session());
 passport.use(
   new LocalStrategy(
     {
-      //https://stackoverflow.com/questions/34511021/passport-js-missing-credentials
+      // https://stackoverflow.com/questions/34511021/passport-js-missing-credentials
       usernameField: "email",
       passwordField: "password",
     },
@@ -86,7 +90,7 @@ passport.serializeUser((user, done) => {
 });
 
 passport.deserializeUser(async (id, done) => {
-  console.log(`user logged out`);
+  console.log(`user ${id} logged out`);
 
   try {
     const user = await User.findById(id);
@@ -97,12 +101,15 @@ passport.deserializeUser(async (id, done) => {
 });
 
 // routes
-// ! Place routes after using passport session to avoid error related to middleware
+// ! Place routes after using passport session
+// ! to avoid error related to middleware
 app.use("/", indexRouter);
 app.use("/auth", authRouter);
 
 // socket.io stuffs
 let userCount = 0;
+const canvasBuffer = [];
+const Pixel = require("./models/pixel");
 
 const io = require("socket.io")(server, {
   cors: {
@@ -119,12 +126,39 @@ io.on("connection", (socket) => {
 
   // console.log(socket.handshake.auth); // get data defined by client
 
-  // Listens and logs the message to the console
-  socket.on("message", (data) => {
-    console.log(data);
+  // Listen to pixel changes
+  socket.on("message", async (pixel) => {
+    console.log(pixel);
 
-    // sends the message to all the users on the server
-    io.emit("messageResponse", data);
+    // send updated pixel to all users
+    io.emit("messageResponse", pixel);
+
+    // TODO: merge changes into buffer
+    // check if data.position already in buffer.
+    // if yes, simply modify. else add new entry
+    canvasBuffer.push(pixel);
+
+    // every 10 pixel changes, save state of canvas to database
+    if (canvasBuffer.length == 10) {
+      console.log("Backing up changes to database.");
+
+      console.log(canvasBuffer);
+      // save changes to mongodb
+
+      // TODO: Include canvas id as well if there is more than 1 canvas.
+      await Promise.all(
+        canvasBuffer.map((p) =>
+          Pixel.findOneAndUpdate(
+            { position: p.position },
+            { $set: { color: p.color } },
+            {}
+          )
+        )
+      );
+
+      pixelCount = 0;
+      canvasBuffer.length = 0; // reset buffer
+    }
   });
 
   socket.on("disconnect", () => {
