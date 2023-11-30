@@ -1,6 +1,5 @@
 require("dotenv").config();
-const port = normalizePort(process.env.PORT || "4000");
-
+const port = 4000;
 const express = require("express");
 const app = express();
 const http = require("http");
@@ -10,6 +9,14 @@ const cookieParser = require("cookie-parser");
 const logger = require("morgan");
 const cors = require("cors");
 const mongoose = require("mongoose");
+
+const LocalStrategy = require("passport-local").Strategy;
+const passport = require("passport");
+const bcrypt = require("bcryptjs");
+const session = require("express-session");
+
+const User = require("./models/user");
+const Pixel = require("./models/pixel");
 
 const indexRouter = require("./routes/index");
 const authRouter = require("./routes/auth");
@@ -25,31 +32,39 @@ async function main() {
   await mongoose.connect(process.env.MONGO_STRING);
 }
 
+// server setup
 app.set("port", port);
 server.listen(port);
-server.on("error", onError);
+server.on("error", (error) => {
+  console.log(error);
+});
 server.on("listening", () => {
   console.log(`Listening on http://localhost:${port}/`);
 });
 
+// middlewares
 app.use(cors());
 app.use(logger("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "public")));
-
-// passport js
-const User = require("./models/user");
-const LocalStrategy = require("passport-local").Strategy;
-const passport = require("passport");
-const bcrypt = require("bcryptjs");
-const session = require("express-session");
-
-app.use(session({ secret: "cats", resave: false, saveUninitialized: true }));
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET || "random-secret",
+    resave: false,
+    saveUninitialized: true,
+  })
+);
 app.use(passport.initialize());
 app.use(passport.session());
 
+// routes
+// ! routes must be after middlewares
+app.use("/", indexRouter);
+app.use("/auth", authRouter);
+
+// passportjs stuffs
 passport.use(
   new LocalStrategy(
     {
@@ -100,16 +115,9 @@ passport.deserializeUser(async (id, done) => {
   }
 });
 
-// routes
-// ! Place routes after using passport session
-// ! to avoid error related to middleware
-app.use("/", indexRouter);
-app.use("/auth", authRouter);
-
 // socket.io stuffs
 let userCount = 0;
 const canvasBuffer = [];
-const Pixel = require("./models/pixel");
 
 const io = require("socket.io")(server, {
   cors: {
@@ -167,48 +175,3 @@ io.on("connection", (socket) => {
     io.emit("userCount", userCount);
   });
 });
-
-/**
- *  Normalize a port into a number, string, or false.
- * @param {*} val port number
- * @returns {integer}  normalized port
- */
-function normalizePort(val) {
-  const port = parseInt(val, 10);
-
-  if (isNaN(port)) {
-    // named pipe
-    return val;
-  }
-
-  if (port >= 0) {
-    // port number
-    return port;
-  }
-
-  return false;
-}
-
-/**
- * Event listener for HTTP server "error" event.
- * @param {*} error error
- */
-function onError(error) {
-  if (error.syscall !== "listen") {
-    throw error;
-  }
-
-  const bind = typeof port === "string" ? "Pipe " + port : "Port " + port;
-
-  // handle specific listen errors with friendly messages
-  switch (error.code) {
-    case "EACCES":
-      console.error(bind + " requires elevated privileges");
-      process.exit(1);
-    case "EADDRINUSE":
-      console.error(bind + " is already in use");
-      process.exit(1);
-    default:
-      throw error;
-  }
-}
