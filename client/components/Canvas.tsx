@@ -5,6 +5,7 @@ import { Group, ActionIcon, Stack, Button, Tooltip, Text } from "@mantine/core";
 import { IconZoomIn, IconZoomOut, IconZoomReset } from "@tabler/icons-react";
 import ColorPalette from "./ColorPalette";
 import { socket } from "../common/socket";
+import { BACKEND_URL } from "../common/constants";
 
 interface pageProps {
   loggedIn: boolean;
@@ -13,7 +14,7 @@ interface pageProps {
 export default function Canvas({ loggedIn }: pageProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [scale, setScale] = useState(4);
-  const canvasSizeInPixels = 300; // number of pixels on canvas will be canvasSizeInPixels * canvasSizeInPixels
+  const canvasSizeInPixels = 100; // number of pixels on canvas on each row and column of canvas
   const canvasColor = "white";
   const [selectedPixelColor, setSelectedPixelColor] = useState(""); // color of paintbrush
   const [coordinates, setCoordinates] = useState(""); // coordinates of cursor position on canvas
@@ -21,14 +22,74 @@ export default function Canvas({ loggedIn }: pageProps) {
 
   // When canvas component has loaded, initialize everything
   useEffect(() => {
+    async function loadCanvas() {
+      try {
+        const response = await fetch(`${BACKEND_URL}/canvas`, {
+          method: "GET",
+        });
+
+        const jsonObj = await response.json();
+        console.log(jsonObj);
+
+        if (response.ok) {
+          // no error
+          fillCanvas(jsonObj);
+          return;
+        }
+
+        // an error occurred
+        window.alert(jsonObj);
+      } catch (error) {
+        window.alert(error);
+      }
+    }
+
+    function fillCanvas(colorArray: [string]) {
+      /**
+       * Converts a 6-digit hex color to RGBA where the alpha value is set to 255.
+       * @param hexColor event
+       *
+       * Adapted from: https://stackoverflow.com/a/28056903/17627866
+       */
+      function hexToRGBA(hexColor: string) {
+        const r = parseInt(hexColor.slice(1, 3), 16),
+          g = parseInt(hexColor.slice(3, 5), 16),
+          b = parseInt(hexColor.slice(5, 7), 16);
+
+        return [r, g, b, 255];
+      }
+
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+
+      const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const canvasData = imgData.data;
+      const totalPixelCount = canvasSizeInPixels * canvasSizeInPixels;
+
+      for (let p = 0; p < 4 * totalPixelCount; p += 4) {
+        const pixelPosition = Math.floor(p / 4);
+        const [r, g, b, a] = hexToRGBA(colorArray[pixelPosition]);
+
+        canvasData[p + 0] = r;
+        canvasData[p + 1] = g;
+        canvasData[p + 2] = b;
+        canvasData[p + 3] = a;
+      }
+
+      ctx.putImageData(imgData, 0, 0);
+    }
+
     if (!loggedIn) return;
 
     // setup socket
     socket.connect();
     socket.on("messageResponse", (data) => {
-      const x = Math.floor(data.position / canvasSizeInPixels);
-      const y = data.position % canvasSizeInPixels;
-      plotPixel(x, y, data.color);
+      const row = Math.floor(data.position / canvasSizeInPixels);
+      const column = data.position % canvasSizeInPixels;
+      plotPixel(column, row, data.color);
     });
 
     const canvas = canvasRef.current;
@@ -37,13 +98,12 @@ export default function Canvas({ loggedIn }: pageProps) {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    // paint canvas
+    // paint empty canvas
     ctx.fillStyle = canvasColor;
     ctx.fillRect(0, 0, canvasSizeInPixels, canvasSizeInPixels);
 
-    // console.log(ctx.getImageData(0, 0, canvasSizeInPixels, canvasSizeInPixels));
-    // drawArt();
-    // TODO: use imageData to fill canvas initially
+    // fill canvas
+    loadCanvas();
 
     return () => {
       socket.disconnect();
@@ -58,15 +118,15 @@ export default function Canvas({ loggedIn }: pageProps) {
 
     // inform server of changes
     socket.emit("message", {
-      position: canvasSizeInPixels * x + y,
+      position: canvasSizeInPixels * y + x,
       color: selectedPixelColor,
     });
   }
 
   /**
    * Plots a pixel (a unit square) on the canvas
-   * @param x row number of pixel
-   * @param y column number of pixel
+   * @param x column number of pixel
+   * @param y row number of pixel
    * @param color HEX code for color of pixel
    * @returns
    */
@@ -99,26 +159,6 @@ export default function Canvas({ loggedIn }: pageProps) {
     setScale(x);
   }
 
-  function drawArt() {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    const pixels = imgData.data;
-
-    for (let p = 0; p < 100; p += 4) {
-      pixels[p + 0] = 1;
-      pixels[p + 1] = 127;
-      pixels[p + 2] = 255;
-      pixels[p + 3] = 255;
-    }
-
-    ctx.putImageData(imgData, 0, 0);
-  }
-
   function updatePixelColor(hexColor: string) {
     if (hexColor.length !== 7) {
       setSelectedPixelColor("black");
@@ -130,7 +170,7 @@ export default function Canvas({ loggedIn }: pageProps) {
   /**
    * Calculate coordinates of mouse event on canvas, taking scale factor into consideration.
    * @param e Mouse event
-   * @returns An array of size 2 where first element is row index and second element is column index.
+   * @returns An array of size 2 where first element is column index and second element is row index.
    * Array may be equal to [-1, -1] in the case where canvas is null.
    */
   function getCanvasCursorCoordinates(
@@ -154,7 +194,7 @@ export default function Canvas({ loggedIn }: pageProps) {
    */
   function displayLiveCoordinates(e: React.MouseEvent<Element, MouseEvent>) {
     const [x, y] = getCanvasCursorCoordinates(e);
-    const formattedString = `(${x}, ${y})`;
+    const formattedString = `(${y}, ${x})`;
     setCoordinates(formattedString);
   }
 
