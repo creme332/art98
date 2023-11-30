@@ -1,6 +1,6 @@
 /**
  * This script populates initializes your newly created database.
- * Run it using node in server directory.
+ * Run it using node in server directory. It will take 3-4 minutes to execute. 
  * NOTE: A .env file must be present in server folder and it must
  * contain your mongo connection string
  * ! If you want to execute the script more than once, delete your
@@ -15,7 +15,7 @@ const Canvas = require("./models/canvas");
 
 /**
  * The greater the canvas size, the more time it will take to create
- * canvas and its respective pixels on MongoDB. A 100x100 grid takes 10 minutes.
+ * canvas and its respective pixels on MongoDB.
  */
 const canvasSize = 100; // 100x100 pixels
 
@@ -39,7 +39,7 @@ async function main() {
   await createPixels(canvasID);
 
   // create an administrator
-  createUser("john@gmail.com", "john", "admin", "password");
+  // createUser("john@gmail.com", "john", "admin", "password");
 
   console.log("Debug: Closing mongoose");
   mongoose.connection.close();
@@ -89,22 +89,25 @@ async function linkToCanvas(canvasID, pixelID) {
  */
 async function createPixels(canvasID) {
   const totalPixels = canvasSize * canvasSize;
-  console.log(`Debug: Saving ${totalPixels} pixel documents to MongoDB...`);
+  const pixels = [];
+  console.log(`Debug: Creating ${totalPixels} pixel documents locally...`);
 
   for (let position = 0; position < totalPixels; position++) {
-    const _id = new mongoose.Types.ObjectId();
     const pixelData = {
-      _id,
       position,
-      color: "white",
+      color: "#FFFFFF",
       canvas: canvasID,
     };
     const pixel = new Pixel(pixelData);
-    await pixel.save();
-    // ! Order in which pixels are placed in pixels array field is important.
-    // ! Do not use Promise.all to save all pixels at once as the
-    // ! order of pixels in the pixels array will not be preserved.
-    await linkToCanvas(canvasID, pixel._id);
+    pixels.push(pixel);
   }
+  console.log("Debug: Finished.");
+
+  console.log(`Debug: Pushing documents to pixels database...`);
+  await Promise.all(pixels.map((p) => p.save()));
+  console.log("Debug: Finished.");
+
+  console.log(`Debug: Linking pixels database and canvas database...`);
+  await Promise.all(pixels.map((p) => linkToCanvas(canvasID, p._id)));
   console.log("Debug: Completed.");
 }
