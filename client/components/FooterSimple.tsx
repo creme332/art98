@@ -10,8 +10,8 @@ export default function FooterSimple() {
           collaborative. Some content might be inappropriate or offensive.
           Please be aware that the images presented do not necessarily reflect
           the views or values of the game creator. The content was created by
-          various users and may not align with the creator's beliefs or
-          identity. If you encounter any offensive material, please
+          various users and may not align with the creator&apos;s beliefs
+          or identity. If you encounter any offensive material, please
           <Anchor
             fw={800}
             c={"#9d3333"}
