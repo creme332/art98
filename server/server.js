@@ -59,6 +59,15 @@ app.use(
 app.use(passport.initialize());
 app.use(passport.session());
 
+// create my own middleware
+// Reference: https://www.geeksforgeeks.org/express-js-res-locals-property/
+// app.use((req, res, next) => {
+//   res.locals.user = req.user;
+//   res.locals.isMember = req.user && req.user.membershipStatus !== "none";
+//   res.locals.currentPath = req.path;
+//   next();
+// });
+
 // routes
 // ! routes must be after middlewares
 app.use("/", indexRouter);
@@ -117,7 +126,8 @@ passport.deserializeUser(async (id, done) => {
 
 // socket.io stuffs
 let userCount = 0;
-const canvasBuffer = [];
+const canvasBuffer = []; // stores pixels to be updated
+let pixelPositionToBufferIndex = {}; // maps pixel position to index of canvasBuffer storing corresponding pixel data
 
 const io = require("socket.io")(server, {
   cors: {
@@ -135,43 +145,75 @@ io.on("connection", (socket) => {
   // console.log(socket.handshake.auth); // get data defined by client
 
   // Listen to pixel changes
-  socket.on("message", async (pixel) => {
-    console.log(pixel);
+  socket.on("message", (updatedPixel) => {
+    // TODO: Validate updatedPixel
+    console.log(updatedPixel);
 
     // send updated pixel to all users
-    io.emit("messageResponse", pixel);
+    io.emit("messageResponse", updatedPixel);
 
-    // TODO: merge changes into buffer
-    // check if data.position already in buffer.
-    // if yes, simply modify. else add new entry
-    canvasBuffer.push(pixel);
+    // check if pixel already in buffer
+    console.log(pixelPositionToBufferIndex);
+    const pixelPosition = updatedPixel.position.toString(); // string format of pixel position
+    const bufferIndex = pixelPositionToBufferIndex[pixelPosition];
+    console.log(pixelPosition, bufferIndex);
 
-    // every 10 pixel changes, save state of canvas to database
+    if (bufferIndex >= 0) {
+      // pixel is already found in buffer so modify it
+      canvasBuffer[bufferIndex] = updatedPixel;
+    } else {
+      // pixel is not present in buffer so create a new entry
+      canvasBuffer.push(updatedPixel);
+      pixelPositionToBufferIndex[pixelPosition] = canvasBuffer.length - 1;
+    }
+    console.log(pixelPositionToBufferIndex);
+    console.log(canvasBuffer);
+
+    // save state of canvas to database incrementally to avoid massive updates
     if (canvasBuffer.length == 10) {
-      console.log("Backing up changes to database.");
-
-      console.log(canvasBuffer);
-      // save changes to mongodb
-
-      // TODO: Include canvas id as well if there is more than 1 canvas.
-      await Promise.all(
-        canvasBuffer.map((p) =>
-          Pixel.findOneAndUpdate(
-            { position: p.position },
-            { $set: { color: p.color } },
-            {}
-          )
-        )
-      );
-
-      pixelCount = 0;
-      canvasBuffer.length = 0; // reset buffer
+      console.log("Saving canvas changes to database.");
+      uploadCanvasBuffer();
     }
   });
 
   socket.on("disconnect", () => {
-    userCount--;
     console.log(`user ${socket.id} disconnected`);
+
+    // update count of online users and notify listeners
+    userCount--;
     io.emit("userCount", userCount);
+
+    // when last user leaves the game,
+    // save remaining data in buffer to database
+    if (userCount == 0) uploadCanvasBuffer();
   });
 });
+
+function uploadCanvasBuffer() {
+  if (canvasBuffer.length > 0) {
+    // send updates to mongodb in parallel
+    Promise.all(
+      canvasBuffer.map((p) =>
+        Pixel.findOneAndUpdate(
+          {
+            // TODO: Include canvas id if there is more than 1 canvas.
+            position: p.position,
+          },
+          {
+            $set: {
+              // TODO: Add user ID
+              color: p.color,
+              timestamp: new Date(),
+            },
+          },
+          {}
+        )
+      )
+    );
+
+    // reset buffer while updates are ongoing
+    // * No need to await above promise
+    canvasBuffer.length = 0;
+    pixelPositionToBufferIndex = {};
+  }
+}
