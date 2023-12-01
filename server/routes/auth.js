@@ -1,4 +1,5 @@
 const express = require("express");
+// eslint-disable-next-line new-cap
 const router = express.Router();
 const passport = require("passport");
 const signUpController = require("../controllers/sign_up_controller");
@@ -6,8 +7,8 @@ const signUpController = require("../controllers/sign_up_controller");
 router.post("/register", signUpController.create_new_user);
 
 /* Authenticate users login */
-router.post("/login", function (req, res, next) {
-  passport.authenticate("local", function (err, user, info) {
+router.post("/login", (req, res, next) => {
+  passport.authenticate("local", (err, user, info) => {
     // console.log(err, user, info);
     if (err) {
       return next(err);
@@ -15,7 +16,7 @@ router.post("/login", function (req, res, next) {
     if (!user) {
       return res.status(401).send(info);
     }
-    req.login(user, function (err) {
+    req.login(user, (err) => {
       if (err) {
         return next(err);
       }
@@ -25,12 +26,14 @@ router.post("/login", function (req, res, next) {
 });
 
 /* Deal with user log out*/
-router.post("/logout", function (req, res, next) {
-  req.logout(function (err) {
+router.post("/logout", (req, res, next) => {
+  console.log(`logout ${req.session.id}`);
+
+  req.logout((err) => {
     if (err) {
       return next(err);
     }
-    return res.send();
+    return res.status(200).send();
   });
 });
 
