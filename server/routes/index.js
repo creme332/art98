@@ -1,8 +1,9 @@
 const express = require("express");
+// eslint-disable-next-line new-cap
 const router = express.Router();
 const canvasController = require("../controllers/canvas_controller");
 
-router.get("/", function (req, res, next) {
+router.get("/", (req, res, next) => {
   res.json({ message: "Hello world" });
 });
 

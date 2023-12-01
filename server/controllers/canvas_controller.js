@@ -34,6 +34,7 @@ exports.pixels_color = asyncHandler(async (req, res, next) => {
       },
     },
     {
+      // return only pixel color
       $project: {
         "pixels.color": 1,
       },
@@ -41,8 +42,8 @@ exports.pixels_color = asyncHandler(async (req, res, next) => {
   ]);
   /*
   Result from mongodb looks like this:
-  [{"pixels":[{"color":"white"},{"color":"white"},{"color":"white"},{"color":"white"}]}]
-  
+  [{"pixels":[{"color":"white"},{"color":"white"},
+  {"color":"white"},{"color":"white"}]}]
   We want: ["white","white","white","white"]
   */
   // return an array of colors

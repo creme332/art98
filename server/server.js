@@ -127,7 +127,13 @@ passport.deserializeUser(async (id, done) => {
 // socket.io stuffs
 let userCount = 0;
 const canvasBuffer = []; // stores pixels to be updated
-let pixelPositionToBufferIndex = {}; // maps pixel position to index of canvasBuffer storing corresponding pixel data
+
+/**
+ * Maps pixel position to index of canvasBuffer storing corresponding pixel data
+ *
+ * Index must be a string.
+ */
+let pixelPositionToBufferIndex = {};
 
 const io = require("socket.io")(server, {
   cors: {
@@ -147,16 +153,15 @@ io.on("connection", (socket) => {
   // Listen to pixel changes
   socket.on("message", (updatedPixel) => {
     // TODO: Validate updatedPixel
-    console.log(updatedPixel);
 
     // send updated pixel to all users
     io.emit("messageResponse", updatedPixel);
 
     // check if pixel already in buffer
-    console.log(pixelPositionToBufferIndex);
-    const pixelPosition = updatedPixel.position.toString(); // string format of pixel position
+
+    // get string format of updated pixel position
+    const pixelPosition = updatedPixel.position.toString();
     const bufferIndex = pixelPositionToBufferIndex[pixelPosition];
-    console.log(pixelPosition, bufferIndex);
 
     if (bufferIndex >= 0) {
       // pixel is already found in buffer so modify it
@@ -166,12 +171,11 @@ io.on("connection", (socket) => {
       canvasBuffer.push(updatedPixel);
       pixelPositionToBufferIndex[pixelPosition] = canvasBuffer.length - 1;
     }
-    console.log(pixelPositionToBufferIndex);
-    console.log(canvasBuffer);
+    // console.log(pixelPositionToBufferIndex);
+    // console.log(canvasBuffer);
 
     // save state of canvas to database incrementally to avoid massive updates
     if (canvasBuffer.length == 10) {
-      console.log("Saving canvas changes to database.");
       uploadCanvasBuffer();
     }
   });
@@ -189,8 +193,13 @@ io.on("connection", (socket) => {
   });
 });
 
+/**
+ * Uploads canvasBuffer array to mongodb
+ */
 function uploadCanvasBuffer() {
   if (canvasBuffer.length > 0) {
+    console.log("Saving canvas changes to database.");
+
     // send updates to mongodb in parallel
     Promise.all(
       canvasBuffer.map((p) =>
