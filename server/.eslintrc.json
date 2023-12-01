@@ -11,14 +11,16 @@
   "rules": {
     "quotes": ["error", "double"],
     "object-curly-spacing": "off",
+    "indent": "off",
+    "comma-dangle": "off",
     "valid-jsdoc": [
-      "error",
+      "warn",
       {
         "prefer": {
           "return": "returns"
-        }
-      },
-      { "requireReturn": "false" }
+        },
+        "requireReturn": false
+      }
     ]
   }
 }
