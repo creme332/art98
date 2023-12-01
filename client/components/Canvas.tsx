@@ -40,7 +40,6 @@ export default function Canvas({ loggedIn }: pageProps) {
         });
 
         const jsonObj = await response.json();
-        console.log(jsonObj);
 
         if (response.ok) {
           // no error
@@ -124,7 +123,6 @@ export default function Canvas({ loggedIn }: pageProps) {
 
   function handleDraw(e: React.MouseEvent<Element, MouseEvent>) {
     const [x, y] = getCanvasCursorCoordinates(e);
-    console.log("Called handleDraw()");
 
     // plot pixel on canvas
     plotPixel(x, y, selectedPixelColor);
@@ -169,11 +167,11 @@ export default function Canvas({ loggedIn }: pageProps) {
     instance: { transformState: { scale: any } };
   }) {
     const x = e.instance.transformState.scale;
-    // console.log("scale = ", x);
     setScale(x);
   }
 
   function updatePixelColor(hexColor: string) {
+    if (!hexColor) return;
     if (hexColor.length !== 7) {
       setSelectedPixelColor("black");
     } else {
@@ -250,10 +248,7 @@ export default function Canvas({ loggedIn }: pageProps) {
           e.preventDefault();
           e.stopPropagation();
 
-          console.log("Mouse down");
-
           setDrawing(true); // allow drawing
-          handleDraw(e);
         }
       }}
       onMouseUp={(event) => {
@@ -270,7 +265,6 @@ export default function Canvas({ loggedIn }: pageProps) {
         // Prevent context menu from opening
         e.preventDefault();
         e.stopPropagation();
-        console.log(e);
 
         setDrawing(true);
         handleDraw(e);

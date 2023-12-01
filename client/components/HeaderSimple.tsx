@@ -27,7 +27,6 @@ export default function HeaderSimple({ loggedIn }: headerProps) {
     if (loggedIn) {
       socket.connect();
       socket.on("userCount", (data) => {
-        console.log("called");
         setPlayerCount(data);
       });
     }

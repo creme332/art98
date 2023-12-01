@@ -7,7 +7,7 @@ interface paletteProps {
 }
 
 export default function ColorPalette({ updatePixelColor }: paletteProps) {
-  const [activeColorIndex, setActiveColor] = useState(0);
+  const [activeColorIndex, setActiveColorIndex] = useState(0);
 
   useEffect(() => {
     updatePixelColor(canvasColors[activeColorIndex]);
@@ -16,11 +16,11 @@ export default function ColorPalette({ updatePixelColor }: paletteProps) {
   function activateColor(index: number) {
     if (index === activeColorIndex) {
       // unselect current color
-      setActiveColor(-1);
+      setActiveColorIndex(-1);
       updatePixelColor("");
     } else {
       // select another color
-      setActiveColor(index);
+      setActiveColorIndex(index);
       updatePixelColor(canvasColors[index]);
     }
   }
