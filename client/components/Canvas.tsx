@@ -1,7 +1,16 @@
 import styles from "../styles/Canvas.module.css";
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 import React, { useEffect, useRef, useState } from "react";
-import { Group, ActionIcon, Stack, Button, Tooltip, Text } from "@mantine/core";
+import {
+  Group,
+  ActionIcon,
+  Stack,
+  Button,
+  Tooltip,
+  Text,
+  LoadingOverlay,
+} from "@mantine/core";
+import { useDisclosure } from "@mantine/hooks";
 import { IconZoomIn, IconZoomOut, IconZoomReset } from "@tabler/icons-react";
 import ColorPalette from "./ColorPalette";
 import { socket } from "../common/socket";
@@ -19,10 +28,12 @@ export default function Canvas({ loggedIn }: pageProps) {
   const [selectedPixelColor, setSelectedPixelColor] = useState(""); // color of paintbrush
   const [coordinates, setCoordinates] = useState(""); // coordinates of cursor position on canvas
   const [drawing, setDrawing] = useState(false); // is user currently drawing
+  const [visibleLoading, loadingOverlayHandler] = useDisclosure(true);
 
   // When canvas component has loaded, initialize everything
   useEffect(() => {
     async function loadCanvas() {
+      loadingOverlayHandler.open();
       try {
         const response = await fetch(`${BACKEND_URL}/canvas`, {
           method: "GET",
@@ -34,6 +45,7 @@ export default function Canvas({ loggedIn }: pageProps) {
         if (response.ok) {
           // no error
           fillCanvas(jsonObj);
+          loadingOverlayHandler.close();
           return;
         }
 
@@ -112,6 +124,7 @@ export default function Canvas({ loggedIn }: pageProps) {
 
   function handleDraw(e: React.MouseEvent<Element, MouseEvent>) {
     const [x, y] = getCanvasCursorCoordinates(e);
+    console.log("Called handleDraw()");
 
     // plot pixel on canvas
     plotPixel(x, y, selectedPixelColor);
@@ -120,6 +133,7 @@ export default function Canvas({ loggedIn }: pageProps) {
     socket.emit("message", {
       position: canvasSizeInPixels * y + x,
       color: selectedPixelColor,
+      author: "me",
     });
   }
 
@@ -268,7 +282,13 @@ export default function Canvas({ loggedIn }: pageProps) {
   );
 
   return (
-    <Stack>
+    <Stack pos="relative">
+      <LoadingOverlay
+        visible={visibleLoading}
+        zIndex={1000}
+        overlayProps={{ radius: "sm", blur: 2 }}
+      />
+
       <TransformWrapper
         initialScale={scale}
         onTransformed={handleScaleChange}
