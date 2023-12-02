@@ -17,7 +17,7 @@ export default function IndexPage({ loggedIn, setLoggedIn }: pageProps) {
     if (!loggedIn) {
       router.push("/login");
     }
-  }, []);
+  }, [loggedIn, router]);
 
   return (
     <div>
