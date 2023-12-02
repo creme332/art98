@@ -18,9 +18,9 @@ router.post("/login", (req, res, next) => {
     }
     req.login(user, (err) => {
       if (err) {
-        return next(err);
+        return res.status(500).json({ error: "Login failed." });
       }
-      return res.status(200).send(user);
+      res.status(200).send();
     });
   })(req, res, next);
 });
