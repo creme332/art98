@@ -41,6 +41,7 @@ export default function AuthenticationForm({ setLoggedIn }: pageProps) {
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: "include", // ! important
         body: JSON.stringify(values),
       });
       console.log(response);

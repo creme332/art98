@@ -21,6 +21,13 @@ const Pixel = require("./models/pixel");
 const indexRouter = require("./routes/index");
 const authRouter = require("./routes/auth");
 
+const corsOptions = {
+  origin: "http://localhost:3000",
+  credentials: true,
+  methods: ["GET", "POST"],
+};
+const io = require("socket.io")(server, corsOptions);
+
 // connect to mongodb
 mongoose.set("strictQuery", false);
 main().catch((err) => console.log(err));
@@ -43,21 +50,36 @@ server.on("listening", () => {
 });
 
 // middlewares
-app.use(cors());
+const sessionMiddleware = session({
+  secret: process.env.SESSION_SECRET || "random-secret",
+  resave: false,
+  saveUninitialized: true,
+});
+app.use(cors(corsOptions));
 app.use(logger("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "public")));
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET || "random-secret",
-    resave: false,
-    saveUninitialized: true,
-  })
-);
+app.use(sessionMiddleware);
 app.use(passport.initialize());
 app.use(passport.session());
+
+// Reference: https://github.com/socketio/socket.io/blob/master/examples/passport-example/index.js#L76-L80
+const wrap = (middleware) => (socket, next) =>
+  middleware(socket.request, {}, next);
+
+io.use(wrap(sessionMiddleware));
+io.use(wrap(passport.initialize()));
+io.use(wrap(passport.session()));
+
+io.use((socket, next) => {
+  if (socket.request.user) {
+    next();
+  } else {
+    next(new Error("Unauthorized"));
+  }
+});
 
 // create my own middleware
 // Reference: https://www.geeksforgeeks.org/express-js-res-locals-property/
@@ -108,16 +130,18 @@ passport.use(
 );
 
 passport.serializeUser((user, done) => {
-  console.log(`user logged in: ${user.id}`);
+  console.log(`serializeUser: ${user}`);
 
   done(null, user.id);
 });
 
 passport.deserializeUser(async (id, done) => {
-  console.log(`user ${id} logged out`);
+  console.log(`deserializeUser: ${id}`);
 
   try {
     const user = await User.findById(id);
+    console.log(user);
+
     done(null, user);
   } catch (err) {
     done(err);
@@ -135,15 +159,17 @@ const canvasBuffer = []; // stores pixels to be updated
  */
 let pixelPositionToBufferIndex = {};
 
-const io = require("socket.io")(server, {
-  cors: {
-    origin: "http://localhost:3000",
-    credentials: true,
-    methods: ["GET", "POST"],
-  },
-});
-
 io.on("connection", (socket) => {
+  console.log(`new connection ${socket.id}`);
+  socket.on("whoami", (cb) => {
+    cb(socket.request.user ? socket.request.user.username : "");
+  });
+
+  const session = socket.request.session;
+  console.log(`saving sid ${socket.id} in session ${session.id}`);
+  session.socketId = socket.id;
+  session.save();
+
   console.log(`user ${socket.id} connected`);
   userCount++;
   io.emit("userCount", userCount);

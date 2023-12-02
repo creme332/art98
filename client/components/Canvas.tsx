@@ -37,6 +37,7 @@ export default function Canvas({ loggedIn }: pageProps) {
       try {
         const response = await fetch(`${BACKEND_URL}/canvas`, {
           method: "GET",
+          credentials: "include",
         });
 
         const jsonObj = await response.json();
@@ -49,9 +50,9 @@ export default function Canvas({ loggedIn }: pageProps) {
         }
 
         // an error occurred
-        window.alert(jsonObj);
+        window.alert(JSON.stringify(jsonObj));
       } catch (error) {
-        window.alert(error);
+        window.alert(JSON.stringify(error));
       }
     }
 
