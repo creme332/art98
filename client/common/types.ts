@@ -1,7 +1,7 @@
 import { Socket } from "socket.io-client";
 
 export interface User {
-  type: "basic" | "premium" | "admin";
+  type: "Basic" | "Premium" | "Admin";
   email: string;
   name: string;
   password: string;

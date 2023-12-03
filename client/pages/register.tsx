@@ -26,7 +26,7 @@ interface specialUser extends User {
  */
 export default function RegistrationForm() {
   const [values, setValues] = useState<specialUser>({
-    type: "basic",
+    type: "Basic",
     email: "",
     password: "",
     name: "",
@@ -94,7 +94,7 @@ export default function RegistrationForm() {
             name="type"
             label="Select your role"
             defaultValue="Basic"
-            onChange={(e: "basic" | "premium" | "admin") =>
+            onChange={(e: "Basic" | "Premium" | "Admin") =>
               setValues({ ...values, type: e })
             }
           >
@@ -106,7 +106,7 @@ export default function RegistrationForm() {
           </Radio.Group>
 
           {/* If user's role is set to premium or administrator, ask for secret */}
-          {values.type !== "basic" && (
+          {values.type !== "Basic" && (
             <TextInput
               mt="md"
               required
