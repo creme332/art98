@@ -105,7 +105,7 @@ passport.deserializeUser(async (id, done) => {
 });
 
 // socket.io stuffs
-let userCount = 0;
+let onlineUsers = []; // array of objects for currently online users
 const canvasBuffer = []; // stores pixels to be updated
 const basicRateLimiter = new RateLimiterMemory({
   points: 5, // 5 points
@@ -140,6 +140,24 @@ async function checkRateLimit(handshakeAddress, userType) {
 }
 
 /**
+ *
+ * @param {*} changedUser affected user
+ * @param {boolean} joined  has user joined or left?
+ */
+function onOnlineUserChange(changedUser, joined) {
+  // send names of online users to all clients
+  if (joined) {
+    onlineUsers.push(changedUser);
+  } else {
+    onlineUsers = onlineUsers.filter((user) => user.id !== changedUser.id);
+  }
+  io.emit(
+    "online-usernames",
+    onlineUsers.map((user) => user.name)
+  );
+}
+
+/**
  * Maps pixel position to index of canvasBuffer storing corresponding pixel data
  *
  * Index must be a string.
@@ -151,8 +169,8 @@ io.on("connection", (socket) => {
   const connectedUser = socket.request.user;
 
   console.log(`user ${socket.id} connected`);
-  userCount++;
-  io.emit("userCount", userCount);
+
+  onOnlineUserChange(connectedUser, true);
 
   // TODO: if canvas buffer is non-empty, emit buffer to clients
 
@@ -208,13 +226,12 @@ io.on("connection", (socket) => {
   socket.on("disconnect", () => {
     console.log(`user ${socket.id} disconnected`);
 
-    // update count of online users and notify listeners
-    userCount--;
-    io.emit("userCount", userCount);
+    // remove disconnected user from onlineUsers
+    onOnlineUserChange(socket.request.user, false);
 
     // when last user leaves the game,
     // save remaining data in buffer to database
-    if (userCount == 0) uploadCanvasBuffer();
+    if (onlineUsers.length == 0) uploadCanvasBuffer();
   });
 });
 
