@@ -190,9 +190,6 @@ io.on("connection", (socket) => {
         io.to(socket.id).emit("limit-exceeded");
         return;
       }
-
-      // inform user that he has not yet exceeded the rate limit
-      io.to(socket.id).emit("limit-not-exceeded");
     }
 
     // send updated pixel to all users
