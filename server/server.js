@@ -53,7 +53,7 @@ server.on("listening", () => {
 const sessionMiddleware = session({
   secret: process.env.SESSION_SECRET || "random-secret",
   resave: false,
-  saveUninitialized: true,
+  saveUninitialized: false,
 });
 app.use(cors(corsOptions));
 app.use(logger("dev"));
@@ -81,14 +81,6 @@ io.use((socket, next) => {
   }
 });
 
-// create my own middleware
-// Reference: https://www.geeksforgeeks.org/express-js-res-locals-property/
-// app.use((req, res, next) => {
-//   res.locals.user = req.user;
-//   res.locals.isMember = req.user && req.user.membershipStatus !== "none";
-//   res.locals.currentPath = req.path;
-//   next();
-// });
 
 // routes
 // ! routes must be after middlewares
@@ -130,7 +122,7 @@ passport.use(
 );
 
 passport.serializeUser((user, done) => {
-  console.log(`serializeUser: ${user}`);
+  console.log(`serializeUser: ${user.id}`);
 
   done(null, user.id);
 });
@@ -140,8 +132,6 @@ passport.deserializeUser(async (id, done) => {
 
   try {
     const user = await User.findById(id);
-    console.log(user);
-
     done(null, user);
   } catch (err) {
     done(err);
@@ -161,18 +151,13 @@ let pixelPositionToBufferIndex = {};
 
 io.on("connection", (socket) => {
   console.log(`new connection ${socket.id}`);
-  socket.on("whoami", (cb) => {
-    cb(socket.request.user ? socket.request.user.username : "");
-  });
-
-  const session = socket.request.session;
-  console.log(`saving sid ${socket.id} in session ${session.id}`);
-  session.socketId = socket.id;
-  session.save();
+  console.log(socket.request.user);
 
   console.log(`user ${socket.id} connected`);
   userCount++;
   io.emit("userCount", userCount);
+
+  // if canvas buffer is non-empty, emit buffer to clients
 
   // console.log(socket.handshake.auth); // get data defined by client
 
@@ -183,12 +168,14 @@ io.on("connection", (socket) => {
     // send updated pixel to all users
     io.emit("messageResponse", updatedPixel);
 
-    // check if pixel already in buffer
-
     // get string format of updated pixel position
     const pixelPosition = updatedPixel.position.toString();
     const bufferIndex = pixelPositionToBufferIndex[pixelPosition];
 
+    // attach user id to pixel
+    updatedPixel.author = socket.request.user.id;
+
+    // check if pixel already in buffer
     if (bufferIndex >= 0) {
       // pixel is already found in buffer so modify it
       canvasBuffer[bufferIndex] = updatedPixel;
@@ -236,9 +223,9 @@ function uploadCanvasBuffer() {
           },
           {
             $set: {
-              // TODO: Add user ID
               color: p.color,
               timestamp: new Date(),
+              author: p.author,
             },
           },
           {}
