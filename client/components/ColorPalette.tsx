@@ -25,6 +25,13 @@ export default function ColorPalette({ updatePixelColor }: paletteProps) {
     }
   }
 
+  function getTickColor() {
+    const c = canvasColors[activeColorIndex]; // current color swatch color
+    // on white and yellow backgrounds, make tick black
+    if (c === "#FFFFFF" || c === "#FFFF00") return "black";
+    return "white";
+  }
+
   return (
     <Group>
       {canvasColors.map((c, index) => (
@@ -40,7 +47,7 @@ export default function ColorPalette({ updatePixelColor }: paletteProps) {
               style={{
                 width: rem(12),
                 height: rem(12),
-                color: "white",
+                color: getTickColor(),
               }}
             />
           )}
