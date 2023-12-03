@@ -28,13 +28,15 @@ export default function Canvas({ loggedIn, userData }: pageProps) {
   const canvasSizeInPixels = 100; // number of pixels on canvas on each row and column of canvas
   const canvasColor = "white";
   const [selectedPixelColor, setSelectedPixelColor] = useState(""); // color of paintbrush
-  const [coordinates, setCoordinates] = useState(""); // coordinates of cursor position on canvas
+  const [coordinates, setCoordinates] = useState("()"); // coordinates of cursor position on canvas
   const [drawing, setDrawing] = useState(false); // is user currently drawing
+  const [limitExceeded, setLimitExceeded] = useState(false);
   const [visibleLoading, loadingOverlayHandler] = useDisclosure(true);
 
   // When canvas component has loaded, initialize everything
   useEffect(() => {
     async function loadCanvas() {
+      console.log("Fetching canvas...");
       loadingOverlayHandler.open();
       try {
         const response = await fetch(`${BACKEND_URL}/canvas`, {
@@ -48,6 +50,7 @@ export default function Canvas({ loggedIn, userData }: pageProps) {
           // no error
           fillCanvas(jsonObj);
           loadingOverlayHandler.close();
+          console.log("Done");
           return;
         }
 
@@ -106,6 +109,14 @@ export default function Canvas({ loggedIn, userData }: pageProps) {
       plotPixel(column, row, data.color);
     });
 
+    socket.on("limit-exceeded", (data) => {
+      setLimitExceeded(true);
+    });
+
+    socket.on("limit-not-exceeded", (data) => {
+      setLimitExceeded(false);
+    });
+
     const canvas = canvasRef.current;
     if (!canvas) return;
 
@@ -127,14 +138,18 @@ export default function Canvas({ loggedIn, userData }: pageProps) {
   function handleDraw(e: React.MouseEvent<Element, MouseEvent>) {
     const [x, y] = getCanvasCursorCoordinates(e);
 
-    // plot pixel on canvas
-    plotPixel(x, y, selectedPixelColor);
-
     // inform server of changes
     socket.emit("message", {
       position: canvasSizeInPixels * y + x,
       color: selectedPixelColor,
     });
+
+    // server will send either "limit-exceeded" or "limit-not-exceeded"
+
+    if (!limitExceeded) {
+      // plot pixel on canvas
+      plotPixel(x, y, selectedPixelColor);
+    }
   }
 
   /**

@@ -9,6 +9,7 @@ const cookieParser = require("cookie-parser");
 const logger = require("morgan");
 const cors = require("cors");
 const mongoose = require("mongoose");
+const { RateLimiterMemory } = require("rate-limiter-flexible");
 
 const passport = require("passport");
 const passportStrategy = require("./utils/passport").strategy;
@@ -106,6 +107,37 @@ passport.deserializeUser(async (id, done) => {
 // socket.io stuffs
 let userCount = 0;
 const canvasBuffer = []; // stores pixels to be updated
+const basicRateLimiter = new RateLimiterMemory({
+  points: 5, // 5 points
+  duration: 60, // per minute
+});
+const premiumRateLimiter = new RateLimiterMemory({
+  points: 20, // 20 points
+  duration: 60, // per minute
+});
+
+/**
+ * Checks if a client has exceeding his limit
+ * @param {string} handshakeAddress Value of socket.handshake.address
+ * @param {string} userType type of user
+ * @returns {boolean} True if rate limit has not been exceeded
+ *  and false otherwise
+ */
+async function checkRateLimit(handshakeAddress, userType) {
+  try {
+    // consume 1 point per event for basic and premium users
+    if (userType === "Basic") {
+      await basicRateLimiter.consume(handshakeAddress);
+    }
+    if (userType === "Premium") {
+      await premiumRateLimiter.consume(handshakeAddress);
+    }
+    return true;
+  } catch (rejRes) {
+    // no available points to consume
+    return false;
+  }
+}
 
 /**
  * Maps pixel position to index of canvasBuffer storing corresponding pixel data
@@ -116,19 +148,34 @@ let pixelPositionToBufferIndex = {};
 
 io.on("connection", (socket) => {
   console.log(`new connection ${socket.id}`);
-  console.log(socket.request.user);
+  const connectedUser = socket.request.user;
 
   console.log(`user ${socket.id} connected`);
   userCount++;
   io.emit("userCount", userCount);
 
-  // if canvas buffer is non-empty, emit buffer to clients
-
-  // console.log(socket.handshake.auth); // get data defined by client
+  // TODO: if canvas buffer is non-empty, emit buffer to clients
 
   // Listen to pixel changes
-  socket.on("message", (updatedPixel) => {
+  socket.on("message", async (updatedPixel) => {
     // TODO: Validate updatedPixel
+
+    // check if non-admin users have exceeded their limits
+    if (connectedUser.type !== "Admin") {
+      const rateLimitExceeded = !(await checkRateLimit(
+        socket.handshake.address,
+        connectedUser.type
+      ));
+      if (rateLimitExceeded) {
+        console.log("Limit exceeded");
+        // inform user that his he has exceeded the rate limit
+        io.to(socket.id).emit("limit-exceeded");
+        return;
+      }
+
+      // inform user that he has not yet exceeded the rate limit
+      io.to(socket.id).emit("limit-not-exceeded");
+    }
 
     // send updated pixel to all users
     io.emit("messageResponse", updatedPixel);
@@ -138,7 +185,7 @@ io.on("connection", (socket) => {
     const bufferIndex = pixelPositionToBufferIndex[pixelPosition];
 
     // attach user id to pixel
-    updatedPixel.author = socket.request.user.id;
+    updatedPixel.author = connectedUser.id;
 
     // check if pixel already in buffer
     if (bufferIndex >= 0) {
