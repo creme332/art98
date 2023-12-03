@@ -29,6 +29,14 @@ router.post("/login", (req, res, next) => {
 router.post("/logout", (req, res, next) => {
   console.log(`logout ${req.session.id}`);
 
+  // TODO: close socket
+
+  /**
+   * Invoking logout() will remove the req.user property
+   *  and clear the login session (if any).
+   *
+   *  Reference: https://www.passportjs.org/concepts/authentication/logout/
+   *  */
   req.logout((err) => {
     if (err) {
       return next(err);
