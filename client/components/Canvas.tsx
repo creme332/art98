@@ -30,7 +30,6 @@ export default function Canvas({ loggedIn, userData }: pageProps) {
   const [selectedPixelColor, setSelectedPixelColor] = useState(""); // color of paintbrush
   const [coordinates, setCoordinates] = useState("()"); // coordinates of cursor position on canvas
   const [drawing, setDrawing] = useState(false); // is user currently drawing
-  const [limitExceeded, setLimitExceeded] = useState(false);
   const [visibleLoading, loadingOverlayHandler] = useDisclosure(true);
 
   // When canvas component has loaded, initialize everything
@@ -110,11 +109,7 @@ export default function Canvas({ loggedIn, userData }: pageProps) {
     });
 
     socket.on("limit-exceeded", (data) => {
-      setLimitExceeded(true);
-    });
-
-    socket.on("limit-not-exceeded", (data) => {
-      setLimitExceeded(false);
+      window.alert("Drawing limit exceeded. Please wait.");
     });
 
     const canvas = canvasRef.current;
@@ -143,13 +138,6 @@ export default function Canvas({ loggedIn, userData }: pageProps) {
       position: canvasSizeInPixels * y + x,
       color: selectedPixelColor,
     });
-
-    // server will send either "limit-exceeded" or "limit-not-exceeded"
-
-    if (!limitExceeded) {
-      // plot pixel on canvas
-      plotPixel(x, y, selectedPixelColor);
-    }
   }
 
   /**
@@ -366,7 +354,7 @@ export default function Canvas({ loggedIn, userData }: pageProps) {
         )}
       </TransformWrapper>
       <Text fz={"md"}>{`Pixel position = ${coordinates}`}</Text>
-      {userData.type === "Admin" && (
+      {userData?.type === "Admin" && (
         <Button
           aria-label="Clear canvas"
           onClick={clearCanvas}
