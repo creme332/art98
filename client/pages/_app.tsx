@@ -3,6 +3,7 @@ import Head from "next/head";
 import { MantineProvider } from "@mantine/core";
 import { theme } from "../theme";
 import { useState } from "react";
+import { User } from "../common/types";
 
 interface AppProps {
   Component: () => JSX.Element;
@@ -11,6 +12,11 @@ interface AppProps {
 
 export default function App({ Component, pageProps }: AppProps) {
   const [loggedIn, setLoggedIn] = useState<boolean>(false);
+  const [userData, setUserData] = useState<User | null>(null);
+
+  function updateUserData(user: User) {
+    setUserData(user);
+  }
 
   function updateLoginStatus(status: boolean) {
     setLoggedIn(status);
@@ -35,6 +41,8 @@ export default function App({ Component, pageProps }: AppProps) {
         {...pageProps}
         loggedIn={loggedIn}
         setLoggedIn={updateLoginStatus}
+        userData={userData}
+        setUserData={updateUserData}
       />
     </MantineProvider>
   );

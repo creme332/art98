@@ -4,13 +4,14 @@ import HeaderSimple from "../components/HeaderSimple";
 import Footer from "../components/FooterSimple";
 import { useRouter } from "next/router";
 import { useEffect } from "react";
+import { User } from "../common/types";
 
 interface pageProps {
   loggedIn: boolean;
-  setLoggedIn: (status: boolean) => void;
+  userData: User;
 }
 
-export default function IndexPage({ loggedIn, setLoggedIn }: pageProps) {
+export default function IndexPage({ loggedIn, userData }: pageProps) {
   const router = useRouter();
 
   useEffect(() => {
@@ -24,7 +25,7 @@ export default function IndexPage({ loggedIn, setLoggedIn }: pageProps) {
       <HeaderSimple loggedIn={loggedIn} />
       {loggedIn && (
         <Container>
-          <Canvas loggedIn={loggedIn} />
+          <Canvas loggedIn={loggedIn} userData={userData} />
         </Container>
       )}
       <Footer />
