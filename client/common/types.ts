@@ -1,15 +1,8 @@
-import { Socket } from "socket.io-client";
-
 export interface User {
   type: "Basic" | "Premium" | "Admin";
   email: string;
   name: string;
   password: string;
-}
-
-//TODO: Delete below
-export interface appProps {
-  socket: Socket<ServerToClientEvents, ClientToServerEvents>;
 }
 
 export interface pixelProps {
