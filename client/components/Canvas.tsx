@@ -134,7 +134,6 @@ export default function Canvas({ loggedIn, userData }: pageProps) {
     socket.emit("message", {
       position: canvasSizeInPixels * y + x,
       color: selectedPixelColor,
-      author: "me",
     });
   }
 
