@@ -22,7 +22,7 @@ export default function IndexPage({ loggedIn, userData }: pageProps) {
 
   return (
     <div>
-      <HeaderSimple loggedIn={loggedIn} />
+      <HeaderSimple loggedIn={loggedIn} userType={userData?.type} />
       {loggedIn && (
         <Container>
           <Canvas loggedIn={loggedIn} userData={userData} />

@@ -16,18 +16,21 @@ import { socket } from "../common/socket";
 
 interface headerProps {
   loggedIn: boolean;
+  userType: string;
 }
 
-export default function HeaderSimple({ loggedIn }: headerProps) {
+export default function HeaderSimple({ loggedIn, userType }: headerProps) {
   const [playerCount, setPlayerCount] = useState(0);
+  const [playerNames, setPlayerNames] = useState<[string] | null>(null);
   const router = useRouter();
 
   useEffect(() => {
     // check if user logged in
     if (loggedIn) {
       socket.connect();
-      socket.on("userCount", (data) => {
-        setPlayerCount(data);
+      socket.on("online-usernames", (data) => {
+        setPlayerCount(data.length);
+        setPlayerNames(data);
       });
     }
 
@@ -51,6 +54,20 @@ export default function HeaderSimple({ loggedIn }: headerProps) {
     }
   }
 
+  function displayUsernames() {
+    if (userType === "Basic") {
+      return (
+        <Group>
+          <IconLock />
+          <Text size="sm">
+            Only premium users and administrators can see the identities of
+            online users.
+          </Text>
+        </Group>
+      );
+    }
+    return <Text> {playerNames?.join(", ")}</Text>;
+  }
   return (
     <Box pb={50}>
       <header className={classes.header}>
@@ -70,15 +87,7 @@ export default function HeaderSimple({ loggedIn }: headerProps) {
                 </Text>
               </UnstyledButton>
             </HoverCard.Target>
-            <HoverCard.Dropdown>
-              <Group>
-                <IconLock />
-                <Text size="sm">
-                  Only premium users and administrators can see the identities
-                  of online users.
-                </Text>
-              </Group>
-            </HoverCard.Dropdown>
+            <HoverCard.Dropdown>{displayUsernames()}</HoverCard.Dropdown>
           </HoverCard>
 
           <Group visibleFrom="sm">
