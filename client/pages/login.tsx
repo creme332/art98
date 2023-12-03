@@ -14,6 +14,7 @@ import { useState } from "react";
 import classes from "../styles/LoginForm.module.css";
 import { BACKEND_URL } from "../common/constants";
 import { useRouter } from "next/router";
+import { User } from "../common/types";
 
 interface loginDetails {
   email: string;
@@ -22,14 +23,44 @@ interface loginDetails {
 
 interface pageProps {
   setLoggedIn: (status: boolean) => void;
+  setUserData: (user: User) => void;
 }
 
-export default function AuthenticationForm({ setLoggedIn }: pageProps) {
+export default function AuthenticationForm({
+  setLoggedIn,
+  setUserData,
+}: pageProps) {
   const router = useRouter();
   const [values, setValues] = useState<loginDetails>({
     email: "aaaaaa",
     password: "aaaaaa",
   });
+
+  async function getUserData() {
+    try {
+      const response = await fetch(`${BACKEND_URL}/user`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include", // ! important
+      });
+      console.log(response);
+
+      const json = await response.json();
+
+      if (response.ok) {
+        return json;
+      }
+
+      // error
+      console.log(json);
+      window.alert(json.error);
+    } catch (error) {
+      window.alert(error);
+      console.log(error);
+    }
+  }
 
   async function submitHandler(e: SyntheticEvent) {
     e.preventDefault();
@@ -47,8 +78,12 @@ export default function AuthenticationForm({ setLoggedIn }: pageProps) {
       console.log(response);
 
       if (response.ok) {
-        setLoggedIn(true);
-        return router.push("/canvas");
+        const userData = await getUserData();
+        if (userData) {
+          setLoggedIn(true);
+          setUserData(userData);
+          return router.push("/canvas");
+        }
       }
       // error
       const json = await response.json();
