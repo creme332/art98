@@ -15,12 +15,14 @@ import { IconZoomIn, IconZoomOut, IconZoomReset } from "@tabler/icons-react";
 import ColorPalette from "./ColorPalette";
 import { socket } from "../common/socket";
 import { BACKEND_URL } from "../common/constants";
+import { User } from "../common/types";
 
 interface pageProps {
   loggedIn: boolean;
+  userData: User;
 }
 
-export default function Canvas({ loggedIn }: pageProps) {
+export default function Canvas({ loggedIn, userData }: pageProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [scale, setScale] = useState(4);
   const canvasSizeInPixels = 100; // number of pixels on canvas on each row and column of canvas
@@ -224,6 +226,7 @@ export default function Canvas({ loggedIn }: pageProps) {
     if (!ctx) return;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     // TODO: Inform server
+    // socket.emit("canvas-reset")
   }
 
   const canvasElement = (
@@ -349,14 +352,16 @@ export default function Canvas({ loggedIn }: pageProps) {
         )}
       </TransformWrapper>
       <Text fz={"md"}>{`Pixel position = ${coordinates}`}</Text>
-      <Button
-        aria-label="Clear canvas"
-        onClick={clearCanvas}
-        variant="light"
-        color="red"
-      >
-        Clear canvas
-      </Button>
+      {userData.type === "Admin" && (
+        <Button
+          aria-label="Clear canvas"
+          onClick={clearCanvas}
+          variant="light"
+          color="red"
+        >
+          Clear canvas
+        </Button>
+      )}
     </Stack>
   );
 }
