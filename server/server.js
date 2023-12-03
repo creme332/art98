@@ -10,11 +10,9 @@ const logger = require("morgan");
 const cors = require("cors");
 const mongoose = require("mongoose");
 
-const LocalStrategy = require("passport-local").Strategy;
 const passport = require("passport");
-const bcrypt = require("bcryptjs");
+const passportStrategy = require("./utils/passport").strategy;
 const session = require("express-session");
-
 const User = require("./models/user");
 const Pixel = require("./models/pixel");
 
@@ -81,46 +79,13 @@ io.use((socket, next) => {
   }
 });
 
-
 // routes
 // ! routes must be after middlewares
 app.use("/", indexRouter);
 app.use("/auth", authRouter);
 
 // passportjs stuffs
-passport.use(
-  new LocalStrategy(
-    {
-      // https://stackoverflow.com/questions/34511021/passport-js-missing-credentials
-      usernameField: "email",
-      passwordField: "password",
-    },
-    async (email, password, done) => {
-      console.log(email, password);
-
-      try {
-        const user = await User.findOne({ email });
-        if (!user) {
-          return done(null, false, { error: "Email does not exist." });
-        }
-        console.log("User valid");
-
-        const match = await bcrypt.compare(password, user.password);
-
-        if (!match) {
-          console.log("Passwords invalid");
-          // passwords do not match!
-          return done(null, false, { error: "Invalid password." });
-        }
-        console.log("Passwords valid");
-        return done(null, user);
-      } catch (err) {
-        return done(err);
-      }
-    }
-  )
-);
-
+passport.use(passportStrategy);
 passport.serializeUser((user, done) => {
   console.log(`serializeUser: ${user.id}`);
 
