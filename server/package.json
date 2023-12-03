@@ -18,6 +18,7 @@
     "morgan": "~1.9.1",
     "passport": "^0.6.0",
     "passport-local": "^1.0.0",
+    "rate-limiter-flexible": "^3.0.4",
     "socket.io": "^4.7.2"
   },
   "devDependencies": {
