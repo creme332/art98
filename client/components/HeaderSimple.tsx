@@ -4,6 +4,7 @@ import {
   Text,
   Box,
   HoverCard,
+  Badge,
   UnstyledButton,
 } from "@mantine/core";
 import classes from "../styles/HeaderSimple.module.css";
@@ -54,6 +55,25 @@ export default function HeaderSimple({ loggedIn, userType }: headerProps) {
     }
   }
 
+  function UserBadge() {
+    if (userType === "Basic") {
+      return <Badge color="gray">Basic</Badge>;
+    }
+    if (userType === "Premium") {
+      return <Badge color="yellow">Premium</Badge>;
+    }
+    if (userType === "Admin") {
+      return (
+        <Badge
+          variant="gradient"
+          gradient={{ from: "violet", to: "grape", deg: 360 }}
+        >
+          Admin
+        </Badge>
+      );
+    }
+  }
+
   function displayUsernames() {
     if (userType === "Basic") {
       return (
@@ -78,17 +98,22 @@ export default function HeaderSimple({ loggedIn, userType }: headerProps) {
               art98
             </Text>
           </Group>
-          <HoverCard width={280} shadow="md">
-            <HoverCard.Target>
-              <UnstyledButton>
-                {" "}
-                <Text size="md" fw={600}>
-                  {playerCount} {playerCount > 1 ? "players " : "player"} online
-                </Text>
-              </UnstyledButton>
-            </HoverCard.Target>
-            <HoverCard.Dropdown>{displayUsernames()}</HoverCard.Dropdown>
-          </HoverCard>
+
+          <Group>
+            {UserBadge()}
+            <HoverCard width={280} shadow="md">
+              <HoverCard.Target>
+                <UnstyledButton>
+                  {" "}
+                  <Text size="md" fw={600}>
+                    {playerCount} {playerCount > 1 ? "players " : "player"}{" "}
+                    online
+                  </Text>
+                </UnstyledButton>
+              </HoverCard.Target>
+              <HoverCard.Dropdown>{displayUsernames()}</HoverCard.Dropdown>
+            </HoverCard>
+          </Group>
 
           <Group visibleFrom="sm">
             <Button
