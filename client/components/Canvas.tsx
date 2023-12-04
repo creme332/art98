@@ -26,7 +26,6 @@ export default function Canvas({ loggedIn, userData }: pageProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [scale, setScale] = useState(4);
   const canvasSizeInPixels = 100; // number of pixels on canvas on each row and column of canvas
-  const canvasColor = "white";
   const [selectedPixelColor, setSelectedPixelColor] = useState(""); // color of paintbrush
   const [coordinates, setCoordinates] = useState("()"); // coordinates of cursor position on canvas
   const [drawing, setDrawing] = useState(false); // is user currently drawing
@@ -34,9 +33,22 @@ export default function Canvas({ loggedIn, userData }: pageProps) {
 
   // When canvas component has loaded, initialize everything
   useEffect(() => {
-    async function loadCanvas() {
+    function setupSocketConnection() {
+      // setup socket after initializing canvas
+      socket.connect();
+      socket.on("messageResponse", (data) => {
+        const row = Math.floor(data.position / canvasSizeInPixels);
+        const column = data.position % canvasSizeInPixels;
+        plotPixel(column, row, data.color);
+      });
+
+      socket.on("limit-exceeded", () => {
+        window.alert("Drawing limit exceeded. Please wait.");
+      });
+    }
+
+    async function fetchCanvas() {
       console.log("Fetching canvas...");
-      loadingOverlayHandler.open();
       try {
         const response = await fetch(`${BACKEND_URL}/canvas`, {
           method: "GET",
@@ -47,10 +59,8 @@ export default function Canvas({ loggedIn, userData }: pageProps) {
 
         if (response.ok) {
           // no error
-          fillCanvas(jsonObj);
-          loadingOverlayHandler.close();
           console.log("Done");
-          return;
+          return jsonObj;
         }
 
         // an error occurred
@@ -75,6 +85,8 @@ export default function Canvas({ loggedIn, userData }: pageProps) {
         return [r, g, b, 255];
       }
 
+      if (!colorArray) return;
+
       const canvas = canvasRef.current;
       if (!canvas) return;
 
@@ -98,36 +110,22 @@ export default function Canvas({ loggedIn, userData }: pageProps) {
       ctx.putImageData(imgData, 0, 0);
     }
 
-    if (!loggedIn) return;
+    (async () => {
+      if (!loggedIn) return;
 
-    // setup socket
-    socket.connect();
-    socket.on("messageResponse", (data) => {
-      const row = Math.floor(data.position / canvasSizeInPixels);
-      const column = data.position % canvasSizeInPixels;
-      plotPixel(column, row, data.color);
-    });
-
-    socket.on("limit-exceeded", (data) => {
-      window.alert("Drawing limit exceeded. Please wait.");
-    });
-
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    // paint empty canvas
-    ctx.fillStyle = canvasColor;
-    ctx.fillRect(0, 0, canvasSizeInPixels, canvasSizeInPixels);
-
-    // fill canvas
-    loadCanvas();
+      loadingOverlayHandler.open();
+      const canvasColorsArray = await fetchCanvas();
+      fillCanvas(canvasColorsArray);
+      setupSocketConnection();
+      loadingOverlayHandler.close();
+    })();
 
     return () => {
       socket.disconnect();
     };
+
+    // ! Do not include loadingOverlayHandler as hook dependency
+    // ! as it causes a bug whereby the hook gets executed infinitely.
   }, [loggedIn]);
 
   function handleDraw(e: React.MouseEvent<Element, MouseEvent>) {
@@ -216,19 +214,18 @@ export default function Canvas({ loggedIn, userData }: pageProps) {
   }
 
   function clearCanvas() {
+    // add some basic validation on top of server-side validation
+    if (userData.type !== "Admin") {
+      return window.alert("Forbidden action");
+    }
+
     // ask for confirmation before clearing canvas
     if (
       !confirm("Are you sure to reset the canvas? This action is irreversible.")
     )
       return;
 
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    // TODO: Inform server
-    // socket.emit("canvas-reset")
+    socket.emit("reset-canvas");
   }
 
   const canvasElement = (
