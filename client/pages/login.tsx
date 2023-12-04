@@ -12,87 +12,25 @@ import { SyntheticEvent } from "react";
 import Link from "next/link";
 import { useState } from "react";
 import classes from "../styles/LoginForm.module.css";
-import { BACKEND_URL } from "../common/constants";
-import { useRouter } from "next/router";
-import { User } from "../common/types";
-
-interface loginDetails {
-  email: string;
-  password: string;
-}
+import { loginDetails } from "../common/types";
 
 interface pageProps {
-  setLoggedIn: (status: boolean) => void;
-  setUserData: (user: User) => void;
+  loginHandler: (details: loginDetails) => void;
 }
 
-export default function AuthenticationForm({
-  setLoggedIn,
-  setUserData,
-}: pageProps) {
-  const router = useRouter();
+export default function LoginForm({ loginHandler }: pageProps) {
   const [values, setValues] = useState<loginDetails>({
-    email: "aaaaaa",
-    password: "aaaaaa",
+    email: "",
+    password: "",
   });
-
-  async function getUserData() {
-    try {
-      const response = await fetch(`${BACKEND_URL}/user`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include", // ! important
-      });
-      console.log(response);
-
-      const json = await response.json();
-
-      if (response.ok) {
-        return json;
-      }
-
-      // error
-      console.log(json);
-      window.alert(json.error);
-    } catch (error) {
-      window.alert(error);
-      console.log(error);
-    }
-  }
+  const [loading, setLoading] = useState(false);
 
   async function submitHandler(e: SyntheticEvent) {
+    setLoading(true);
     e.preventDefault();
     console.log(values);
-
-    try {
-      const response = await fetch(`${BACKEND_URL}/auth/login`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include", // ! important
-        body: JSON.stringify(values),
-      });
-      console.log(response);
-
-      if (response.ok) {
-        const userData = await getUserData();
-        if (userData) {
-          setLoggedIn(true);
-          setUserData(userData);
-          return router.push("/canvas");
-        }
-      }
-      // error
-      const json = await response.json();
-      console.log(json);
-      window.alert(json.error);
-    } catch (error) {
-      window.alert(error);
-      console.log(error);
-    }
+    await loginHandler(values);
+    setLoading(false);
   }
 
   return (
@@ -104,7 +42,7 @@ export default function AuthenticationForm({
         <form onSubmit={submitHandler}>
           <Stack>
             <TextInput
-              defaultValue={" "}
+              defaultValue={values.email}
               required
               label="Email"
               placeholder="hello@mantine.dev"
@@ -112,7 +50,7 @@ export default function AuthenticationForm({
               onChange={(e) => setValues({ ...values, email: e.target.value })}
             />
             <PasswordInput
-              defaultValue={" "}
+              defaultValue={values.password}
               required
               label="Password"
               placeholder="Your password"
@@ -132,7 +70,12 @@ export default function AuthenticationForm({
             >
               {"Don't have an account? Register"}
             </Anchor>
-            <Button type="submit" radius="xl">
+            <Button
+              loading={loading}
+              loaderProps={{ type: "dots" }}
+              type="submit"
+              radius="xl"
+            >
               Login
             </Button>
           </Group>

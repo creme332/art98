@@ -3,7 +3,9 @@ import Head from "next/head";
 import { MantineProvider } from "@mantine/core";
 import { theme } from "../theme";
 import { useState } from "react";
-import { User } from "../common/types";
+import { User, loginDetails } from "../common/types";
+import { BACKEND_URL } from "../common/constants";
+import { useRouter } from "next/router";
 
 interface AppProps {
   Component: () => JSX.Element;
@@ -13,13 +15,66 @@ interface AppProps {
 export default function App({ Component, pageProps }: AppProps) {
   const [loggedIn, setLoggedIn] = useState<boolean>(false);
   const [userData, setUserData] = useState<User | null>(null);
-
-  function updateUserData(user: User) {
-    setUserData(user);
-  }
+  const router = useRouter();
 
   function updateLoginStatus(status: boolean) {
     setLoggedIn(status);
+  }
+
+  async function getUserData() {
+    try {
+      const response = await fetch(`${BACKEND_URL}/user`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include", // ! important
+      });
+      console.log(response);
+
+      const json = await response.json();
+
+      if (response.ok) {
+        return json;
+      }
+
+      // error
+      console.log(json);
+      window.alert(json.error);
+    } catch (error) {
+      window.alert(error);
+      console.log(error);
+    }
+  }
+
+  async function loginHandler(loginDetails: loginDetails) {
+    try {
+      const response = await fetch(`${BACKEND_URL}/auth/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include", // ! important
+        body: JSON.stringify(loginDetails),
+      });
+      console.log(response);
+
+      if (response.ok) {
+        const userData = await getUserData();
+        if (userData) {
+          setLoggedIn(true);
+          setUserData(userData);
+          return router.push("/canvas");
+        }
+      }
+      // error
+      const json = await response.json();
+      console.log(json);
+      window.alert(json.error);
+    } catch (error) {
+      window.alert("Server is down. Please try again later.");
+      console.error(error);
+    }
   }
 
   return (
@@ -42,7 +97,7 @@ export default function App({ Component, pageProps }: AppProps) {
         loggedIn={loggedIn}
         setLoggedIn={updateLoginStatus}
         userData={userData}
-        setUserData={updateUserData}
+        loginHandler={loginHandler}
       />
     </MantineProvider>
   );

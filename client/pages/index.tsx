@@ -2,8 +2,13 @@ import { Title, Text, Button, Container } from "@mantine/core";
 import { Dots } from "../components/Dots";
 import classes from "../styles/HeroText.module.css";
 import Link from "next/link";
+import { loginDetails } from "../common/types";
 
-export default function HeroText() {
+interface pageProps {
+  loginHandler: (details: loginDetails) => void;
+}
+
+export default function HomePage({ loginHandler }: pageProps) {
   return (
     <div className={classes.root}>
       <Container className={classes.wrapper}>
@@ -29,18 +34,29 @@ export default function HeroText() {
             <Button
               component={Link}
               href={"/register"}
-              className={classes.control}
               size="lg"
-              variant="default"
-              color="gray"
+              variant="outline"
+              color="grey"
             >
               Register
             </Button>
+
+            <Button
+              loaderProps={{ type: "dots" }}
+              onClick={() =>
+                loginHandler({ email: "aaaaaa", password: "aaaaaa" })
+              }
+              size="lg"
+            >
+              Try demo
+            </Button>
+
             <Button
               component={Link}
               href={"/login"}
-              className={classes.control}
               size="lg"
+              variant="outline"
+              color="grey"
             >
               Login
             </Button>

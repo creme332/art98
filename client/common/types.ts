@@ -10,6 +10,11 @@ export interface pixelProps {
   color: string;
 }
 
+export interface loginDetails {
+  email: string;
+  password: string;
+}
+
 // ------- start of socketio types ----------
 // Reference: https://socket.io/docs/v4/typescript/#types-for-the-server
 
