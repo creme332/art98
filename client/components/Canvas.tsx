@@ -35,7 +35,6 @@ export default function Canvas({ loggedIn, userData }: pageProps) {
   useEffect(() => {
     function setupSocketConnection() {
       // setup socket after initializing canvas
-      socket.connect();
       socket.on("messageResponse", (data) => {
         const row = Math.floor(data.position / canvasSizeInPixels);
         const column = data.position % canvasSizeInPixels;
@@ -45,6 +44,10 @@ export default function Canvas({ loggedIn, userData }: pageProps) {
       socket.on("limit-exceeded", () => {
         window.alert("Drawing limit exceeded. Please wait.");
       });
+
+      // ! connect AFTER defining events because server might send
+      // ! events on connection.
+      socket.connect();
     }
 
     async function fetchCanvas() {
