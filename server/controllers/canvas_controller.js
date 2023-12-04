@@ -2,9 +2,7 @@ const asyncHandler = require("express-async-handler");
 const Canvas = require("../models/canvas");
 
 exports.pixels_color = asyncHandler(async (req, res, next) => {
-  const isAuthenticated = !!req.user;
-  console.log(req.user);
-  if (!isAuthenticated) {
+  if (!req.user) {
     return res.status(401).json({ error: "User is not authenticated" });
   }
 

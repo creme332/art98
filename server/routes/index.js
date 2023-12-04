@@ -9,7 +9,6 @@ router.get("/", (req, res, next) => {
 });
 
 router.get("/canvas", canvasController.pixels_color);
-router.get("/canvas/reset", canvasController.reset_canvas);
 router.get("/user", userController.user_data);
 
 module.exports = router;
