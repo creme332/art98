@@ -70,25 +70,9 @@
 .controls {
   margin-top: var(--mantine-spacing-lg);
   display: flex;
-  justify-content: center;
+  justify-content: space-around;
 
   @media (max-width: $mantine-breakpoint-xs) {
     flex-direction: column;
-  }
-}
-
-.control {
-  &:not(:first-of-type) {
-    margin-left: var(--mantine-spacing-md);
-  }
-
-  @media (max-width: $mantine-breakpoint-xs) {
-    height: rem(42px);
-    font-size: var(--mantine-font-size-md);
-
-    &:not(:first-of-type) {
-      margin-top: var(--mantine-spacing-md);
-      margin-left: 0;
-    }
   }
 }
