@@ -14,8 +14,10 @@ const { RateLimiterMemory } = require("rate-limiter-flexible");
 const passport = require("passport");
 const passportStrategy = require("./utils/passport").strategy;
 const session = require("express-session");
+
 const User = require("./models/user");
 const Pixel = require("./models/pixel");
+const Canvas = require("./models/canvas");
 
 const indexRouter = require("./routes/index");
 const authRouter = require("./routes/auth");
@@ -106,7 +108,26 @@ passport.deserializeUser(async (id, done) => {
 
 // socket.io stuffs
 let onlineUsers = []; // array of objects for currently online users
-const canvasBuffer = []; // stores pixels to be updated
+
+/**
+ * Stores unique changes made to pixels since
+ * the canvas was last updated on mongoddb
+ *
+ * A newly logged in user fetches canvas from
+ * database which may be outdated. The canvasBuffer contains the required
+ * changes to be made to the canvas to make it up-to-date.
+ */
+const canvasBuffer = [];
+
+/**
+ * Save changes made to canvas to database at most
+ * every 10 unique (by position) pixels modified.
+ *
+ * If all users are logged out, then all contents of canvasBuffer
+ * are saved to database.
+ */
+const databaseRefreshRate = 10;
+
 const basicRateLimiter = new RateLimiterMemory({
   points: 5, // 5 points
   duration: 60, // per minute
@@ -164,6 +185,11 @@ function onOnlineUserChange(changedUser, joined) {
  */
 let pixelPositionToBufferIndex = {};
 
+/**
+ * Indicates whether canvas is currently being erased by an admin.
+ */
+let canvasClearOngoing = false;
+
 io.on("connection", (socket) => {
   console.log(`new connection ${socket.id}`);
   const connectedUser = socket.request.user;
@@ -172,11 +198,21 @@ io.on("connection", (socket) => {
 
   onOnlineUserChange(connectedUser, true);
 
-  // TODO: if canvas buffer is non-empty, emit buffer to clients
+  // if canvas buffer is non-empty, emit buffer to connected client
+  if (canvasBuffer.length > 0) {
+    canvasBuffer.forEach((pixel) => {
+      console.log(pixel);
+      socket.emit("messageResponse", pixel);
+    });
+  }
 
   // Listen to pixel changes
   socket.on("message", async (updatedPixel) => {
-    // TODO: Validate updatedPixel
+    // validate updatedPixel
+    if (updatedPixel.position === null || updatedPixel.color === null) return;
+
+    // if canvas is being cleared by an admin, prevent drawing
+    if (canvasClearOngoing) return;
 
     // check if non-admin users have exceeded their limits
     if (connectedUser.type !== "Admin") {
@@ -215,9 +251,44 @@ io.on("connection", (socket) => {
     // console.log(canvasBuffer);
 
     // save state of canvas to database incrementally to avoid massive updates
-    if (canvasBuffer.length == 10) {
+    if (canvasBuffer.length === databaseRefreshRate) {
       uploadCanvasBuffer();
     }
+  });
+
+  socket.on("reset-canvas", () => {
+    // Allow only admins to reset canvas
+    if (connectedUser.type !== "Admin") return;
+
+    // if canvas is already being cleared, ignore
+    if (canvasClearOngoing) return;
+
+    // disable drawing
+    canvasClearOngoing = true;
+
+    // clear buffer
+    canvasBuffer.length = 0;
+    pixelPositionToBufferIndex = {};
+
+    // clear canvas in real-time
+    for (let position = 0; position < 100 * 100; position++) {
+      io.emit("messageResponse", { position, color: "#FFFFFF" });
+    }
+
+    // upload empty canvas to database
+    Canvas.updateMany(
+      {},
+      {
+        $set: {
+          color: "#FFFFFF",
+          timestamp: new Date(),
+          author: connectedUser.id,
+        },
+      }
+    );
+
+    // re-enable drawing
+    canvasClearOngoing = false;
   });
 
   socket.on("disconnect", () => {
