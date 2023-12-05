@@ -5,5 +5,20 @@
     "**/*.sass",
     "**/*.less",
     "node_modules/@mantine/core/esm/index.css"
+  ],
+  "eslint.validate": [
+    "javascript",
+    "javascriptreact",
+    "html",
+    "typescriptreact"
+  ],
+  "cSpell.words": [
+    "cooluser",
+    "Jamstack",
+    "MERN",
+    "mongoddb",
+    "passportjs",
+    "populatedb",
+    "resave"
   ]
 }
