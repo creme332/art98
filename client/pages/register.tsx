@@ -16,8 +16,9 @@ import { useState } from "react";
 import { BACKEND_URL } from "../common/constants";
 import { User } from "../common/types";
 
-interface specialUser extends User {
+interface userFormData extends User {
   secret?: string;
+  confirmPassword: string;
 }
 
 /**
@@ -25,10 +26,11 @@ interface specialUser extends User {
  * @returns
  */
 export default function RegistrationForm() {
-  const [values, setValues] = useState<specialUser>({
+  const [values, setValues] = useState<userFormData>({
     type: "Basic",
     email: "",
     password: "",
+    confirmPassword: "",
     name: "",
   });
 
@@ -87,12 +89,22 @@ export default function RegistrationForm() {
             size="md"
             onChange={(e) => setValues({ ...values, password: e.target.value })}
           />
+          <PasswordInput
+            required
+            label="Confirm password"
+            placeholder="Your password again"
+            mt="md"
+            size="md"
+            onChange={(e) =>
+              setValues({ ...values, confirmPassword: e.target.value })
+            }
+          />
           <Radio.Group
             required
             size="md"
             mt="md"
             name="type"
-            label="Select your role"
+            label="Select your tier"
             defaultValue="Basic"
             onChange={(e: "Basic" | "Premium" | "Admin") =>
               setValues({ ...values, type: e })
@@ -105,7 +117,7 @@ export default function RegistrationForm() {
             </Group>
           </Radio.Group>
 
-          {/* If user's role is set to premium or administrator, ask for secret */}
+          {/* If user's tier is set to premium or administrator, ask for secret */}
           {values.type !== "Basic" && (
             <TextInput
               mt="md"
