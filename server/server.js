@@ -269,12 +269,11 @@ io.on("connection", (socket) => {
     canvasBuffer.length = 0;
     pixelPositionToBufferIndex = {};
 
-    // clear canvas in real-time
-    for (let position = 0; position < 100 * 100; position++) {
-      io.emit("messageResponse", { position, color: "#FFFFFF" });
-    }
+    // order clients to reset their respective canvas
+    // * This approach is faster than emitting color for each pixel
+    io.emit("reset-canvas-order");
 
-    // update all pixels
+    // reset pixels in database
     await Pixel.updateMany(
       {},
       {

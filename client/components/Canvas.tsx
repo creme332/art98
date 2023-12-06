@@ -45,6 +45,20 @@ export default function Canvas({ loggedIn, userData }: pageProps) {
         window.alert("Drawing limit exceeded. Please wait.");
       });
 
+      socket.on("reset-canvas-order", () => {
+        // server gave order to clear canvas
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return;
+
+        window.alert(
+          "An admin is clearing the canvas. Drawing is temporarily disabled for a few minutes."
+        );
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      });
+
       // ! connect AFTER defining events because server might send
       // ! events on connection.
       socket.connect();
@@ -216,7 +230,10 @@ export default function Canvas({ loggedIn, userData }: pageProps) {
     setCoordinates(formattedString);
   }
 
-  function clearCanvas() {
+  /**
+   * Tell server to clear canvas
+   */
+  function emitClearCanvas() {
     // add some basic validation on top of server-side validation
     if (userData.type !== "Admin") {
       return window.alert("Forbidden action");
@@ -357,7 +374,7 @@ export default function Canvas({ loggedIn, userData }: pageProps) {
       {userData?.type === "Admin" && (
         <Button
           aria-label="Clear canvas"
-          onClick={clearCanvas}
+          onClick={emitClearCanvas}
           variant="light"
           color="red"
         >
