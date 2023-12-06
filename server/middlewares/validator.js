@@ -35,7 +35,8 @@ const userTypeChain = () =>
     .escape()
     .custom((value) => {
       return value === "Basic" || value === "Premium" || value === "Admin";
-    });
+    })
+    .withMessage("Invalid user type");
 
 const confirmPasswordChain = () =>
   body("confirmPassword")
@@ -47,30 +48,33 @@ const confirmPasswordChain = () =>
     .withMessage("Passwords do not match");
 
 const secretChain = () =>
-  body("secret").custom((value, { req }) => {
-    const type = req.body.type;
+  body("secret")
+    .custom((value, { req }) => {
+      const type = req.body.type;
 
-    // ignore secret if user is basic
-    if (type == "Basic") {
+      // ignore secret if user is basic
+      if (type == "Basic") {
+        return true;
+      }
+
+      // for all other users, secret must be provided
+      if (!value) {
+        throw new Error("Secret must be provided");
+      }
+
+      // if user is premium, validate secret
+      if (type === "Premium" && process.env.PREMIUM_KEY !== value) {
+        throw new Error("Invalid secret");
+      }
+
+      // if user is admin, validate secret
+      if (type === "Admin" && process.env.ADMIN_KEY !== value) {
+        throw new Error("Invalid secret");
+      }
+
       return true;
-    }
-
-    // for all other users, secret must be provided
-    if (!value) {
-      throw new Error("Secret must be provided");
-    }
-
-    // if user is premium, validate secret
-    if (type == "Premium" && process.env.PREMIUM_KEY !== value) {
-      throw new Error("Invalid secret");
-    }
-
-    // if user is admin, validate secret
-    if (type == "Admin" && process.env.ADMIN_KEY !== value) {
-      throw new Error("Invalid secret");
-    }
-  });
-
+    })
+    .withMessage("Invalid secret");
 const validateChains = (req, res, next) => {
   const errors = validationResult(req);
   console.log(errors);
