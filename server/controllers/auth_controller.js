@@ -9,7 +9,9 @@ const {
   secretChain,
   confirmPasswordChain,
   validateChains,
+  emailChain,
 } = require("../middlewares/validator");
+const passport = require("passport");
 
 exports.create_new_user = [
   uniqueEmailChain(),
@@ -39,5 +41,27 @@ exports.create_new_user = [
         }
       }
     });
+  }),
+];
+
+exports.authenticate_user = [
+  emailChain(),
+  passwordChain(),
+  validateChains,
+  asyncHandler((req, res, next) => {
+    passport.authenticate("local", (err, user, info) => {
+      if (err) {
+        return next(err);
+      }
+      if (!user) {
+        return res.status(401).send(info);
+      }
+      req.login(user, (err) => {
+        if (err) {
+          return res.status(500).json({ error: "Login failed." });
+        }
+        res.status(200).send();
+      });
+    })(req, res, next);
   }),
 ];
