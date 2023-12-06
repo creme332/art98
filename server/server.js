@@ -17,7 +17,6 @@ const session = require("express-session");
 
 const User = require("./models/user");
 const Pixel = require("./models/pixel");
-const Canvas = require("./models/canvas");
 
 const indexRouter = require("./routes/index");
 const authRouter = require("./routes/auth");
@@ -256,7 +255,7 @@ io.on("connection", (socket) => {
     }
   });
 
-  socket.on("reset-canvas", () => {
+  socket.on("reset-canvas", async () => {
     // Allow only admins to reset canvas
     if (connectedUser.type !== "Admin") return;
 
@@ -275,8 +274,8 @@ io.on("connection", (socket) => {
       io.emit("messageResponse", { position, color: "#FFFFFF" });
     }
 
-    // upload empty canvas to database
-    Canvas.updateMany(
+    // update all pixels
+    await Pixel.updateMany(
       {},
       {
         $set: {
