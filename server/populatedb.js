@@ -1,6 +1,6 @@
 /**
  * This script populates initializes your newly created database.
- * Run it using node in server directory. It will take 3-4 minutes to execute. 
+ * Run it using node in server directory. It will take 3-4 minutes to execute.
  * NOTE: A .env file must be present in server folder and it must
  * contain your mongo connection string
  * ! If you want to execute the script more than once, delete your
@@ -9,6 +9,7 @@
 
 require("dotenv").config();
 const mongoose = require("mongoose");
+const bcrypt = require("bcryptjs");
 const User = require("./models/user");
 const Pixel = require("./models/pixel");
 const Canvas = require("./models/canvas");
@@ -38,11 +39,34 @@ async function main() {
   // create pixels for empty canvas
   await createPixels(canvasID);
 
-  // create an administrator
-  // createUser("john@gmail.com", "john", "admin", "password");
+  // create users
+  await createUsers();
 
   console.log("Debug: Closing mongoose");
+
   mongoose.connection.close();
+}
+
+/**
+ * Creates 3 users, one of each type, in database
+ */
+async function createUsers() {
+  console.log("Debug: Creating 3 users..");
+
+  // ! Do not change email and password for demo account
+  // ! as frontend relies on these credentials
+  await Promise.all([
+    createUser("admin@art98.com", "admin-user", "Admin", "admin-password"),
+    createUser(
+      "premium@art98.com",
+      "premium-user",
+      "Premium",
+      "premium-password"
+    ),
+    createUser("demo@art98.com", "demo-user", "Basic", "aaaaaa"),
+  ]);
+
+  console.log("Debug: Finished.");
 }
 
 /**
@@ -59,23 +83,28 @@ async function createEmptyCanvas(canvasID) {
 
 /**
  * Saves data for a new user in database
- * @param {String} email
- * @param {String} name
+ * @param {String} email User email
+ * @param {String} name Username
  * @param {String} type Type of user: basic, premium, admin
- * @param {String} password
+ * @param {String} password Password of user
  */
 async function createUser(email, name, type, password) {
-  const user = new User({ email, name, type, password });
+  const SALT_ROUNDS = parseInt(process.env.SALT_ROUNDS, 10);
+  const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
+  const user = new User({
+    email,
+    name,
+    type,
+    password: hashedPassword,
+  });
   await user.save();
-  users.push(user);
-  console.log(`Added user: ${name}`);
 }
 
 /**
  * Links a pixel object to a canvas by pushing pixelID to the array field
  * in canvas document.
- * @param {mongoose.Schema.Types.ObjectId} canvasID
- * @param {mongoose.Schema.Types.ObjectId} pixelID
+ * @param {mongoose.Schema.Types.ObjectId} canvasID Object ID of canvas
+ * @param {mongoose.Schema.Types.ObjectId} pixelID Object ID of pixel
  */
 async function linkToCanvas(canvasID, pixelID) {
   await Canvas.findByIdAndUpdate(canvasID, {
@@ -103,11 +132,11 @@ async function createPixels(canvasID) {
   }
   console.log("Debug: Finished.");
 
-  console.log(`Debug: Pushing documents to pixels database...`);
+  console.log("Debug: Pushing documents to pixels database...");
   await Promise.all(pixels.map((p) => p.save()));
   console.log("Debug: Finished.");
 
-  console.log(`Debug: Linking pixels database and canvas database...`);
+  console.log("Debug: Linking pixels database and canvas database...");
   await Promise.all(pixels.map((p) => linkToCanvas(canvasID, p._id)));
   console.log("Debug: Completed.");
 }
