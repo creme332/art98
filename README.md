@@ -5,7 +5,7 @@
 ![Mantine](https://img.shields.io/badge/Mantine-16B7FB?style=for-the-badge&logo=mantine&logoColor=black)
 ![MongoDB](https://img.shields.io/badge/MongoDB-%234ea94b.svg?style=for-the-badge&logo=mongodb&logoColor=white)
 
-A real-time collaborative pixel art creation website inspired by [`r/place`](https://en.wikipedia.org/wiki/R/place).
+A real-time collaborative pixel art creation website built with MERN stack. This project was inspired by [`r/place`](https://en.wikipedia.org/wiki/R/place).
 
 ![Screenshot of website](image.png)
 
@@ -19,35 +19,16 @@ A real-time collaborative pixel art creation website inspired by [`r/place`](htt
 - Canvas user interaction: zoom, pan, pinch
 - Web sockets for real-time drawing
 - Jamstack architecture
-- Session-based user authentication and authorization
+- Session-based authentication
 - Password hashing with bcrypt
+- Server-side validation and sanitization using express-validator upon registration 
 - Supports 3 types of users (basic, premium, admin):
-    | Privilege                                                | Basic             | Premium             | Admin     |
-    | -------------------------------------------------------- | ----------------- | ------------------- | --------- |
-    | Number of pixels that can be drawn                       | 1 every 5 minutes | 30  every 5 minutes | Unlimited |
-    | Inspect identity of online users                         | ❌                 | ✅                   | ✅         |
-    | Inspect individual tiles to see who placed them and when | ❌                 | ✅                   | ✅         |
-    | Reset board                                              | ❌                 | ❌                   | ✅         |
-
-## Architecture
-Jamstack architecture
-Built with MERN stack.
-
-### Frontend
-Frontend is hosted on Vercel free tier.
-canvas API for drawing
-
-### Backend
-Database is hosted using MongoDB Atlas.
-Backend in hosted on Render free tier. Server is shut down after 15 minutes of inactivity
-- Only hashed passwords are stored in database
-
-#### API Endpoints
-
-| Endpoint            | Meaning                                                                     |
-| ------------------- | --------------------------------------------------------------------------- |
-| `GET /canvas`       | Get an array of colors representing the colors of each pixel on the canvas. |
-| `GET /user` | Get data of currently authenticated user data.                                                              |
+    | Privilege                                                | Basic        | Premium        | Admin     |
+    | -------------------------------------------------------- | ------------ | -------------- | --------- |
+    | Number of pixels that can be drawn                       | 5 per minute | 20  per minute | Unlimited |
+    | Inspect identity of online users                         | ❌            | ✅              | ✅         |
+    | Inspect individual tiles to see who placed them and when | ❌            | ✅              | ✅         |
+    | Reset board                                              | ❌            | ❌              | ✅         |
 
 ## Installation
 > 🔴 **Prerequisites**: Git, Node.js, a cluster on MongoDB Atlas.
@@ -100,35 +81,31 @@ npm run dev
 
 Frontend is hosted on port 3000 and backend is hosted on port 4000. Open [http://localhost:3000](http://localhost:3000) in your browser to see running website.
 
-## How to play
-Select a color.
-Right click on canvas to place a pixel.
-Left click to move pan canvas.
+### How to play
+- You must first create an account and then login to your account.
+To simply try out the app without any registration, you can click on the `Demo` button on the homepage. However, you will be limited to `Basic` privileges.
+> 🟢 **Tip**: To become a `Premium` user, you must enter the secret key `1234` during registration.
+- To draw a pixel on the canvas, you must **right-click** on a cell. 
+- To move across the canvas, you must **drag** the canvas with left-click.
+- To zoom in/out the canvas, you can either use the buttons with the magnifier icons or use the scroll wheel on your mouse.
+- Hover on `x player online` to see names of currently online players.
+
 
 ## To-do
-- [ ] Create API routes
-  - [x] canvas reset
-  - [x] get user data
-  - [ ] test routes with Postman
-- [x] Save user info to App.tsx upon login (fetch from database).
-- [ ] save timestamp and username when pixel is updated
-- [ ] Show reset canvas button only to admin
-- [ ] Add ratelimiting for pixels
-- [ ] Allow premium users to inspect identity of tile
-- [ ] Add use demo account option in regiser and login page
-- [ ] add a confirmPassword field to your sign-up form and then validate it using a custom validator
-
-
-- [ ] complete my own middleware
-- [ ] Add `upgrade` button
-- [ ] Use my middleware to secure API
-- [ ] Ensure that form validation matches model validation on server
-- [ ] Update backend URL value on server and client before deploying
-- [ ] Run lighthouse report
+- [ ] reset canvas not working
+- [ ] test routes with Postman
+- [ ] Deployment
+  - [ ] Deploy frontend on vercel
+  - [ ] Deploy backend on render
+  - [ ] Update backend URL value on server and client before deploying
+  - [ ] Add secrets to service
+  - [ ] Run lighthouse report
+- [ ] Add more privileges
+  - [ ] admin can use custom colors on top of color palette
 - [ ] Download canvas option
 - [ ] Remove any unused libraries
+- [ ] Rewrite backend in typescript
 
-- [ ] Rewrite backend using typescript
 ## References
 - https://josephg.com/blog/rplace-in-a-weekend/
 - https://www.redditinc.com/blog/how-we-built-rplace/

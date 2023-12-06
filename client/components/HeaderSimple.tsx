@@ -14,6 +14,7 @@ import { useEffect, useState } from "react";
 import { BACKEND_URL } from "../common/constants";
 import { useRouter } from "next/router";
 import { socket } from "../common/socket";
+import Link from "next/link";
 
 interface headerProps {
   loggedIn: boolean;
@@ -48,7 +49,7 @@ export default function HeaderSimple({ loggedIn, userType }: headerProps) {
       console.log(response);
       if (response.ok) {
         socket.disconnect();
-        router.push("/login");
+        router.push("/");
       }
     } catch (error) {
       console.log(error);
@@ -72,6 +73,7 @@ export default function HeaderSimple({ loggedIn, userType }: headerProps) {
         </Badge>
       );
     }
+    return <Badge color="gray">Basic</Badge>;
   }
 
   function displayUsernames() {
@@ -100,7 +102,7 @@ export default function HeaderSimple({ loggedIn, userType }: headerProps) {
           </Group>
 
           <Group>
-            {UserBadge()}
+            <Link href="/upgrade">{UserBadge()}</Link>
             <HoverCard width={280} shadow="md">
               <HoverCard.Target>
                 <UnstyledButton>
