@@ -139,19 +139,19 @@ const premiumRateLimiter = new RateLimiterMemory({
 
 /**
  * Checks if a client has exceeding his limit
- * @param {string} handshakeAddress Value of socket.handshake.address
+ * @param {string} userEmail Email of user
  * @param {string} userType type of user
  * @returns {boolean} True if rate limit has not been exceeded
  *  and false otherwise
  */
-async function checkRateLimit(handshakeAddress, userType) {
+async function checkRateLimit(userEmail, userType) {
   try {
     // consume 1 point per event for basic and premium users
     if (userType === "Basic") {
-      await basicRateLimiter.consume(handshakeAddress);
+      await basicRateLimiter.consume(userEmail);
     }
     if (userType === "Premium") {
-      await premiumRateLimiter.consume(handshakeAddress);
+      await premiumRateLimiter.consume(userEmail);
     }
     return true;
   } catch (rejRes) {
@@ -217,7 +217,7 @@ io.on("connection", (socket) => {
     // check if non-admin users have exceeded their limits
     if (connectedUser.type !== "Admin") {
       const rateLimitExceeded = !(await checkRateLimit(
-        socket.handshake.address,
+        connectedUser.email,
         connectedUser.type
       ));
       if (rateLimitExceeded) {
