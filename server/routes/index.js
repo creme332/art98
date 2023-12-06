@@ -10,5 +10,6 @@ router.get("/", (req, res, next) => {
 
 router.get("/canvas", canvasController.pixels_color);
 router.get("/user", userController.user_data);
+router.post("/upgrade", userController.upgrade_plan);
 
 module.exports = router;
