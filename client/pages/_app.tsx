@@ -6,6 +6,7 @@ import { useState } from "react";
 import { User, loginDetails } from "../common/types";
 import { BACKEND_URL } from "../common/constants";
 import { useRouter } from "next/router";
+import { UserType } from "../common/types";
 
 interface AppProps {
   Component: () => JSX.Element;
@@ -44,6 +45,34 @@ export default function App({ Component, pageProps }: AppProps) {
     } catch (error) {
       window.alert(error);
       console.log(error);
+    }
+  }
+
+  async function updateUserPlan(newType: UserType, secret: string | null) {
+    if (newType === userData?.type) return;
+
+    try {
+      const response = await fetch(`${BACKEND_URL}/upgrade`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include", // ! important
+        body: JSON.stringify({ type: newType, secret }),
+      });
+      console.log(response);
+
+      if (response.ok) {
+        window.alert("Success! Please login again.");
+        return router.push("/");
+      }
+      // error
+      const json = await response.json();
+      console.log(json);
+      window.alert(json.error);
+    } catch (error) {
+      window.alert("Server is down. Please try again later.");
+      console.error(error);
     }
   }
 
@@ -98,6 +127,7 @@ export default function App({ Component, pageProps }: AppProps) {
         setLoggedIn={updateLoginStatus}
         userData={userData}
         loginHandler={loginHandler}
+        updateUserPlan={updateUserPlan}
       />
     </MantineProvider>
   );
