@@ -3,6 +3,7 @@ import { Dots } from "../components/Dots";
 import classes from "../styles/HeroText.module.css";
 import Link from "next/link";
 import { loginDetails } from "../common/types";
+import { demoAccountCredentials } from "../common/constants";
 
 interface pageProps {
   loginHandler: (details: loginDetails) => void;
@@ -43,9 +44,7 @@ export default function HomePage({ loginHandler }: pageProps) {
 
             <Button
               loaderProps={{ type: "dots" }}
-              onClick={() =>
-                loginHandler({ email: "aaaaaa", password: "aaaaaa" })
-              }
+              onClick={() => loginHandler(demoAccountCredentials)}
               size="lg"
             >
               Try demo
