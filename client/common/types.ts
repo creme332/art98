@@ -1,5 +1,7 @@
+export type UserType = "Basic" | "Premium" | "Admin";
+
 export interface User {
-  type: "Basic" | "Premium" | "Admin";
+  type: UserType;
   email: string;
   name: string;
   password: string;
