@@ -93,13 +93,13 @@ app.use("/auth", authRouter);
 // passportjs stuffs
 passport.use(passportStrategy);
 passport.serializeUser((user, done) => {
-  console.log(`serializeUser: ${user.id}`);
+  // console.log(`serializeUser: ${user.id}`);
 
   done(null, user.id);
 });
 
 passport.deserializeUser(async (id, done) => {
-  console.log(`deserializeUser: ${id}`);
+  // console.log(`deserializeUser: ${id}`);
 
   try {
     const user = await User.findById(id);
@@ -197,14 +197,14 @@ io.on("connection", (socket) => {
   console.log(`new connection ${socket.id}`);
   const connectedUser = socket.request.user;
 
-  console.log(`user ${socket.id} connected`);
+  console.log(`user ${connectedUser.name} connected`);
 
   onOnlineUserChange(connectedUser, true);
 
   // if canvas buffer is non-empty, emit buffer to connected client
   if (canvasBuffer.length > 0) {
     canvasBuffer.forEach((pixel) => {
-      console.log(pixel);
+      // console.log(pixel);
       socket.emit("messageResponse", pixel);
     });
   }
@@ -231,15 +231,23 @@ io.on("connection", (socket) => {
       }
     }
 
-    // send updated pixel to all users
-    io.emit("messageResponse", updatedPixel);
+    // attach information to pixel to be sent to all clients
+    const detailedPixel = {
+      ...updatedPixel,
+      author: connectedUser.name,
+      timestamp: new Date(),
+    };
+
+    // send pixel to all users
+    io.emit("messageResponse", detailedPixel);
 
     // get string format of updated pixel position
     const pixelPosition = updatedPixel.position.toString();
     const bufferIndex = pixelPositionToBufferIndex[pixelPosition];
 
-    // attach user id to pixel
+    // attach author id and timestamp to pixel
     updatedPixel.author = connectedUser.id;
+    updatedPixel.timestamp = detailedPixel.timestamp;
 
     // check if pixel already in buffer
     if (bufferIndex >= 0) {
@@ -250,8 +258,6 @@ io.on("connection", (socket) => {
       canvasBuffer.push(updatedPixel);
       pixelPositionToBufferIndex[pixelPosition] = canvasBuffer.length - 1;
     }
-    // console.log(pixelPositionToBufferIndex);
-    // console.log(canvasBuffer);
 
     // save state of canvas to database incrementally to avoid massive updates
     if (canvasBuffer.length === databaseRefreshRate) {
@@ -294,7 +300,7 @@ io.on("connection", (socket) => {
   });
 
   socket.on("disconnect", () => {
-    console.log(`user ${socket.id} disconnected`);
+    console.log(`user ${connectedUser.name} disconnected`);
 
     // remove disconnected user from onlineUsers
     onOnlineUserChange(socket.request.user, false);
@@ -317,13 +323,12 @@ function uploadCanvasBuffer() {
       canvasBuffer.map((p) =>
         Pixel.findOneAndUpdate(
           {
-            // TODO: Include canvas id if there is more than 1 canvas.
             position: p.position,
           },
           {
             $set: {
               color: p.color,
-              timestamp: new Date(),
+              timestamp: p.timestamp,
               author: p.author,
             },
           },
