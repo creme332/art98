@@ -8,7 +8,7 @@ const {
 
 exports.user_data = asyncHandler(async (req, res, next) => {
   // check if user is authenticated
-  console.log(req);
+  // console.log(req);
 
   if (!req.user) {
     return res.status(401).json({ error: "User is not authenticated" });
