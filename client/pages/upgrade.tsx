@@ -48,7 +48,7 @@ interface pageProps {
 }
 
 export default function UpgradePage({ updateUserPlan, userData }: pageProps) {
-  const userType = userData.type;
+  const userType = userData?.type || null;
 
   function clickHandler(newPlan: UserType) {
     if (!userType) return;
@@ -65,7 +65,8 @@ export default function UpgradePage({ updateUserPlan, userData }: pageProps) {
     if (!userType) {
       window.alert("Please login to continue");
     }
-  }, []);
+  }, [userType]);
+
   const features = plans.map((plan) => (
     <Card
       key={plan.title}
