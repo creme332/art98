@@ -13,6 +13,7 @@
     "object-curly-spacing": "off",
     "indent": "off",
     "comma-dangle": "off",
+    "operator-linebreak": "off",
     "valid-jsdoc": [
       "warn",
       {
