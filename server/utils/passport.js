@@ -16,16 +16,16 @@ exports.strategy = new LocalStrategy(
       if (!user) {
         return done(null, false, { error: "Email does not exist." });
       }
-      console.log("User valid");
+      // console.log("User valid");
 
       const match = await bcrypt.compare(password, user.password);
 
       if (!match) {
-        console.log("Passwords invalid");
+        // console.log("Passwords invalid");
         // passwords do not match!
         return done(null, false, { error: "Invalid password." });
       }
-      console.log("Passwords valid");
+      // console.log("Passwords valid");
       return done(null, user);
     } catch (err) {
       return done(err);

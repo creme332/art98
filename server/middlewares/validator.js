@@ -77,7 +77,6 @@ const secretChain = () =>
     .withMessage("Invalid secret");
 const validateChains = (req, res, next) => {
   const errors = validationResult(req);
-  console.log(errors);
   if (errors.isEmpty()) {
     return next();
   }
