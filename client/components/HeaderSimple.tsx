@@ -94,7 +94,7 @@ export default function HeaderSimple({ loggedIn, userType }: headerProps) {
     <Box pb={50}>
       <header className={classes.header}>
         <Group justify="space-between" h="100%">
-          <Group aria-label="art98 logo">
+          <Group aria-label="art98 logo" visibleFrom="sm">
             <IconPaint />
             <Text size="xl" fw={900}>
               art98
@@ -117,7 +117,7 @@ export default function HeaderSimple({ loggedIn, userType }: headerProps) {
             </HoverCard>
           </Group>
 
-          <Group visibleFrom="sm">
+          <Group>
             <Button
               onClick={handleLogOut}
               aria-label="Log out"
