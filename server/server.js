@@ -14,6 +14,7 @@ const { RateLimiterMemory } = require("rate-limiter-flexible");
 const passport = require("passport");
 const passportStrategy = require("./utils/passport").strategy;
 const session = require("express-session");
+const MongoStore = require("connect-mongo");
 
 const User = require("./models/user");
 const Pixel = require("./models/pixel");
@@ -50,15 +51,21 @@ server.on("error", (error) => {
   console.log(error);
 });
 server.on("listening", () => {
-  console.log(`Listening on http://localhost:${port}/`);
+  console.log(
+    process.env.NODE_ENV === "development"
+      ? `Listening on http://localhost:${port}/`
+      : "Listening on https://art98-backend.onrender.com/"
+  );
 });
 
 // middlewares
 const sessionMiddleware = session({
   secret: process.env.SESSION_SECRET || "random-secret",
-  resave: false,
-  saveUninitialized: false,
+  resave: false, // don't save session if unmodified
+  saveUninitialized: false, // don't create session until something stored
+  store: new MongoStore({ mongoUrl: process.env.MONGO_STRING }),
 });
+
 app.use(cors(corsOptions));
 app.use(logger("dev"));
 app.use(express.json());
