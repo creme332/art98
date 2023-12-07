@@ -7,8 +7,10 @@ export interface User {
   password: string;
 }
 
-export interface pixelProps {
+export interface Pixel {
   position: number;
+  timestamp: Date;
+  author: string;
   color: string;
 }
 
@@ -27,7 +29,7 @@ export interface ServerToClientEvents {
   noArg: () => void;
   basicEmit: (a: number, b: string, c: Buffer) => void;
   withAck: (d: string, callback: (e: number) => void) => void;
-  messageResponse: (a: pixelProps) => void;
+  messageResponse: (a: Pixel) => void;
   userCount: (a: number) => void;
 }
 
@@ -35,7 +37,7 @@ export interface ServerToClientEvents {
  * Used when receiving events on server or when sending events from client
  */
 export interface ClientToServerEvents {
-  message: (pixel: pixelProps) => void;
+  message: (pixel: Pixel) => void;
 }
 
 /**
