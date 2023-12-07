@@ -1,56 +1,40 @@
 const asyncHandler = require("express-async-handler");
-const Canvas = require("../models/canvas");
+const Pixel = require("../models/pixel");
 
-exports.pixels_color = asyncHandler(async (req, res, next) => {
+exports.pixels_data = asyncHandler(async (req, res, next) => {
   if (!req.user) {
     return res.status(401).json({ error: "User is not authenticated" });
   }
 
-  const canvas = await Canvas.findOne(); // There's only 1 canvas in database
-  const pixels = await Canvas.aggregate([
+  const pixels = await Pixel.aggregate([
     {
-      // perform aggregation on a single canvas
-      $match: { _id: canvas._id },
+      // remove unnecessary fields
+      $project: { _id: 0, canvas: 0, _v: 0 },
     },
     {
-      // replace each object id in pixels array by actual pixel dictionary
+      // join pixels and users databases on user id field
       $lookup: {
-        from: "pixels",
-        localField: "pixels",
+        from: "users",
+        localField: "author",
         foreignField: "_id",
-        as: "pixels",
+        as: "authorDetails",
       },
+      // authorDetails is an array with a single object
     },
     {
-      // remove canvas id from result
-      $project: { _id: 0 },
-    },
-    {
-      // sort pixels array in ascending order of position
+      // get only name field from the only object authorDetails
       $project: {
-        _id: 0,
-        pixels: {
-          $sortArray: {
-            input: "$pixels",
-            sortBy: { position: 1 },
-          },
-        },
+        position: 1,
+        color: 1,
+        timestamp: 1,
+        author: { $first: "$authorDetails.name" },
       },
     },
     {
-      // return only pixel color
-      $project: {
-        "pixels.color": 1,
-      },
+      // sort pixel objects by position
+      $sort: { position: 1 },
     },
+    // { $limit: 6 },
   ]);
-  /*
-  Result from mongodb looks like this:
-  [{"pixels":[{"color":"white"},{"color":"white"},
-  {"color":"white"},{"color":"white"}]}]
-  We want: ["white","white","white","white"]
-  */
-  // return an array of colors
-  const final = pixels[0].pixels.map((el) => el.color);
-  res.json(final);
+  res.json(pixels);
 });

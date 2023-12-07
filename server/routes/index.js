@@ -8,7 +8,7 @@ router.get("/", (req, res, next) => {
   res.json({ message: "Hello world" });
 });
 
-router.get("/canvas", canvasController.pixels_color);
+router.get("/canvas", canvasController.pixels_data);
 router.get("/user", userController.user_data);
 router.post("/upgrade", userController.upgrade_plan);
 
