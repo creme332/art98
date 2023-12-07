@@ -56,7 +56,8 @@ export default function RegistrationForm() {
       const json = await response.json();
       window.alert(json.error);
     } catch (error) {
-      window.alert(error);
+      console.log(error);
+      window.alert("Server is down. Please try again later.");
     }
   }
   return (
