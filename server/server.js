@@ -21,8 +21,12 @@ const Pixel = require("./models/pixel");
 const indexRouter = require("./routes/index");
 const authRouter = require("./routes/auth");
 
+const frontendURL =
+  process.env.NODE_ENV === "development"
+    ? "http://localhost:3000"
+    : "https://art98.vercel.app";
 const corsOptions = {
-  origin: "http://localhost:3000",
+  origin: frontendURL,
   credentials: true,
   methods: ["GET", "POST"],
 };
