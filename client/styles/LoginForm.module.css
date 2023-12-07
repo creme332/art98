@@ -11,6 +11,7 @@
   min-width: 300px;
   width: 30%;
   @media (max-width: $mantine-breakpoint-sm) {
+    height: 100%;
     width: 100%;
   }
 }

@@ -321,6 +321,7 @@ export default function Canvas({ loggedIn, userData }: pageProps) {
       <TransformWrapper
         initialScale={scale}
         onTransformed={handleScaleChange}
+        centerOnInit	
         maxScale={20}
       >
         {({ zoomIn, zoomOut, resetTransform, ...rest }) => (

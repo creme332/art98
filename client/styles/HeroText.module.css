@@ -73,6 +73,7 @@
   justify-content: space-around;
 
   @media (max-width: $mantine-breakpoint-xs) {
+    gap:rem(18);
     flex-direction: column;
   }
 }
