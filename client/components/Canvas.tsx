@@ -14,9 +14,9 @@ import { useDisclosure } from "@mantine/hooks";
 import { IconZoomIn, IconZoomOut, IconZoomReset } from "@tabler/icons-react";
 import ColorPalette from "./ColorPalette";
 import { socket } from "../common/socket";
-import { BACKEND_URL } from "../common/constants";
 import { User, Pixel } from "../common/types";
 import formatRelative from "date-fns/formatRelative";
+import { fetchCanvas, hexToRGBA } from "../common/utils";
 
 interface pageProps {
   loggedIn: boolean;
@@ -35,48 +35,7 @@ export default function Canvas({ loggedIn, userData }: pageProps) {
 
   // When canvas component has loaded, initialize everything
   useEffect(() => {
-    async function fetchCanvas() {
-      console.log("Fetching canvas...");
-      try {
-        const response = await fetch(`${BACKEND_URL}/canvas`, {
-          method: "GET",
-          credentials: "include",
-        });
-
-        const jsonObj = await response.json();
-
-        if (response.ok) {
-          // no error
-          console.assert(
-            jsonObj.length === canvasSizeInPixels * canvasSizeInPixels
-          );
-          console.log("Done. First few elements are:", jsonObj.slice(0, 5));
-          setCanvasData(jsonObj);
-          return jsonObj;
-        }
-
-        // an error occurred
-        window.alert(JSON.stringify(jsonObj));
-      } catch (error) {
-        window.alert(JSON.stringify(error));
-      }
-    }
-
     function fillCanvas(colorArray: string[]) {
-      /**
-       * Converts a 6-digit hex color to RGBA where the alpha value is set to 255.
-       * @param hexColor event
-       *
-       * Adapted from: https://stackoverflow.com/a/28056903/17627866
-       */
-      function hexToRGBA(hexColor: string) {
-        const r = parseInt(hexColor.slice(1, 3), 16),
-          g = parseInt(hexColor.slice(3, 5), 16),
-          b = parseInt(hexColor.slice(5, 7), 16);
-
-        return [r, g, b, 255];
-      }
-
       if (!colorArray) return;
 
       const canvas = canvasRef.current;
@@ -103,17 +62,16 @@ export default function Canvas({ loggedIn, userData }: pageProps) {
     }
 
     (async () => {
+      loadingOverlayHandler.open(); // start loading animation
+
       if (!loggedIn) return;
 
-      loadingOverlayHandler.open(); // start loading animation
-      const colorArray = (await fetchCanvas()).map((p: Pixel) => p.color); // get an array of colors for canvas
+      const fetchedCanvas = await fetchCanvas();
+      setCanvasData(fetchedCanvas);
+      const colorArray = fetchedCanvas.map((p: Pixel) => p.color); // get an array of colors for canvas
       fillCanvas(colorArray);
       loadingOverlayHandler.close(); // stop loading animation
     })();
-
-    return () => {
-      socket.disconnect();
-    };
 
     // ! Do not include loadingOverlayHandler as hook dependency
     // ! as it causes a bug whereby the hook gets executed infinitely.
@@ -121,56 +79,67 @@ export default function Canvas({ loggedIn, userData }: pageProps) {
   }, [loggedIn]);
 
   useEffect(() => {
-    function setupSocketConnection() {
-      // setup socket after initializing canvas
+    // setup event listeners for socket
 
-      socket.on("messageResponse", (newPixel: Pixel) => {
-        // server is requesting client to update a pixel
+    socket.on("messageResponse", (newPixel: Pixel) => {
+      // server is requesting client to update a pixel
 
-        // plot updated pixel
-        const row = Math.floor(newPixel.position / canvasSizeInPixels);
-        const column = newPixel.position % canvasSizeInPixels;
-        plotPixel(column, row, newPixel.color);
+      // plot updated pixel
+      const row = Math.floor(newPixel.position / canvasSizeInPixels);
+      const column = newPixel.position % canvasSizeInPixels;
+      plotPixel(column, row, newPixel.color);
 
-        // update canvasData by replacing old pixel
-        // *NOTE: canvasData is already sorted by pixel position
-        const newCanvasData = canvasData.map((p) =>
-          p.position === newPixel.position ? newPixel : p
-        );
+      // update canvasData by replacing old pixel
+      // *NOTE: canvasData is already sorted by pixel position
+      const newCanvasData = canvasData.map((p) =>
+        p.position === newPixel.position ? newPixel : p
+      );
 
-        setCanvasData(newCanvasData);
+      setCanvasData(newCanvasData);
+    });
+
+    socket.on("limit-exceeded", () => {
+      // client has exceeded rate limit.
+      window.alert("Drawing limit exceeded. Please wait.");
+    });
+
+    socket.on("reset-canvas-order", () => {
+      // server gave order to clear canvas
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+
+      window.alert(
+        "An admin is clearing the canvas. Drawing is temporarily disabled for a few minutes."
+      );
+
+      // make canvas white
+      const newCanvasData = canvasData.map((p) => {
+        p.color = "#FFFFFF";
+        return p;
       });
+      setCanvasData(newCanvasData);
 
-      socket.on("limit-exceeded", () => {
-        window.alert("Drawing limit exceeded. Please wait.");
-      });
+      ctx.clearRect(0, 0, canvas.width, canvas.height); // clear html canvas
+    });
 
-      socket.on("reset-canvas-order", () => {
-        // server gave order to clear canvas
-        const canvas = canvasRef.current;
-        if (!canvas) return;
-
-        const ctx = canvas.getContext("2d");
-        if (!ctx) return;
-
-        window.alert(
-          "An admin is clearing the canvas. Drawing is temporarily disabled for a few minutes."
-        );
-        setCanvasData([]); // clear canvas data
-
-        // TODO: Fetch canvas data again
-        ctx.clearRect(0, 0, canvas.width, canvas.height); // clear html canvas
-      });
-
-      // ! connect AFTER defining events because server might send
-      // ! events on connection.
-      socket.connect();
-    }
-    setupSocketConnection();
+    return () => {
+      // remove socket event listeners. Ref: https://stackoverflow.com/a/71920423/17627866
+      // or use socket.removeAllListeners();
+      socket.off("messageResponse");
+      socket.off("limit-exceeded");
+      socket.off("reset-canvas-order");
+    };
   }, [canvasData]);
 
   function handleDraw(e: React.MouseEvent<Element, MouseEvent>) {
     const [x, y] = getCanvasCursorCoordinates(e);
+
+    // ! Do not call plotPixel here as server must first validate
+    // ! pixel. Once validation is over, pixel will get automatically
+    // ! Plotted
 
     // inform server of changes
     // * No need to send author name and timestamp as these
