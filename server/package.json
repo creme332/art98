@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "start": "node server.js",
-    "dev": "nodemon server.js"
+    "dev": "nodemon server.js",
+    "populate":"DEBUG=* node populatedb.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

@@ -13,24 +13,27 @@ const bcrypt = require("bcryptjs");
 const User = require("./models/user");
 const Pixel = require("./models/pixel");
 const Canvas = require("./models/canvas");
+const createPixelsDebug = require("debug")("createPixels");
+const createUsersDebug = require("debug")("createUsers");
+const mongoDebug = require("debug")("mongo");
 
 /**
  * The greater the canvas size, the more time it will take to create
  * canvas and its respective pixels on MongoDB.
  */
-const canvasSize = 100; // 100x100 pixels
+const canvasSize = 100; // ! Do not change. Canvas is 100x100 pixels
 
 mongoose.set("strictQuery", false);
 
-main().catch((err) => console.log(err));
+main().catch((err) => mongoDebug(err));
 
 /**
  * Driver function.
  */
 async function main() {
-  console.log("Debug: About to connect");
+  mongoDebug("About to connect");
   await mongoose.connect(process.env.MONGO_STRING);
-  console.log("Debug: Connected");
+  mongoDebug("Connected");
 
   // create empty canvas
   const canvasID = new mongoose.Types.ObjectId();
@@ -42,7 +45,7 @@ async function main() {
   // create users
   await createUsers();
 
-  console.log("Debug: Closing mongoose");
+  mongoDebug("Closing mongoose");
 
   mongoose.connection.close();
 }
@@ -51,7 +54,7 @@ async function main() {
  * Creates 3 users, one of each type, in database
  */
 async function createUsers() {
-  console.log("Debug: Creating 3 users..");
+  createUsersDebug("Creating 3 users");
 
   // ! Do not change email and password for demo account
   // ! as frontend relies on these credentials
@@ -66,7 +69,7 @@ async function createUsers() {
     createUser("demo@art98.com", "demo-user", "Basic", "aaaaaa"),
   ]);
 
-  console.log("Debug: Finished.");
+  createUsersDebug("Finished.");
 }
 
 /**
@@ -119,7 +122,7 @@ async function linkToCanvas(canvasID, pixelID) {
 async function createPixels(canvasID) {
   const totalPixels = canvasSize * canvasSize;
   const pixels = [];
-  console.log(`Debug: Creating ${totalPixels} pixel documents locally...`);
+  createPixelsDebug(`Creating ${totalPixels} pixel documents locally`);
 
   for (let position = 0; position < totalPixels; position++) {
     const pixelData = {
@@ -130,13 +133,14 @@ async function createPixels(canvasID) {
     const pixel = new Pixel(pixelData);
     pixels.push(pixel);
   }
-  console.log("Debug: Finished.");
 
-  console.log("Debug: Pushing documents to pixels database...");
+  createPixelsDebug("Finished.");
+
+  createPixelsDebug("Pushing documents to pixels database");
   await Promise.all(pixels.map((p) => p.save()));
-  console.log("Debug: Finished.");
+  createPixelsDebug("Finished.");
 
-  console.log("Debug: Linking pixels database and canvas database...");
+  createPixelsDebug("Linking pixels database and canvas database");
   await Promise.all(pixels.map((p) => linkToCanvas(canvasID, p._id)));
-  console.log("Debug: Completed.");
+  createPixelsDebug("Finished.");
 }
