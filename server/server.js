@@ -63,7 +63,9 @@ const sessionMiddleware = session({
   secret: process.env.SESSION_SECRET || "random-secret",
   resave: false, // don't save session if unmodified
   saveUninitialized: false, // don't create session until something stored
-  store: new MongoStore({ mongoUrl: process.env.MONGO_STRING }),
+  store: new MongoStore({
+    mongoUrl: process.env.MONGO_STRING,
+  }),
 });
 
 app.use(cors(corsOptions));
@@ -100,13 +102,13 @@ app.use("/auth", authRouter);
 // passportjs stuffs
 passport.use(passportStrategy);
 passport.serializeUser((user, done) => {
-  // console.log(`serializeUser: ${user.id}`);
+  console.log(`serializeUser: ${user.id}`);
 
   done(null, user.id);
 });
 
 passport.deserializeUser(async (id, done) => {
-  // console.log(`deserializeUser: ${id}`);
+  console.log(`deserializeUser: ${id}`);
 
   try {
     const user = await User.findById(id);
