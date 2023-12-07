@@ -95,6 +95,9 @@ export default function App({ Component, pageProps }: AppProps) {
           setUserData(userData);
           return router.push("/canvas");
         }
+
+        // no user data available
+        return;
       }
       // error
       const json = await response.json();
