@@ -15,7 +15,8 @@ import { IconZoomIn, IconZoomOut, IconZoomReset } from "@tabler/icons-react";
 import ColorPalette from "./ColorPalette";
 import { socket } from "../common/socket";
 import { BACKEND_URL } from "../common/constants";
-import { User } from "../common/types";
+import { User, Pixel } from "../common/types";
+import formatRelative from "date-fns/formatRelative";
 
 interface pageProps {
   loggedIn: boolean;
@@ -24,46 +25,16 @@ interface pageProps {
 
 export default function Canvas({ loggedIn, userData }: pageProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const [scale, setScale] = useState(4);
+  const [scale, setScale] = useState(4); // zoom factor  for canvas
+  const [canvasData, setCanvasData] = useState<Pixel[]>([]); // data about each pixel on canvas
   const canvasSizeInPixels = 100; // number of pixels on canvas on each row and column of canvas
   const [selectedPixelColor, setSelectedPixelColor] = useState(""); // color of paintbrush
-  const [coordinates, setCoordinates] = useState("()"); // coordinates of cursor position on canvas
+  const [livePixelData, setLivePixelData] = useState("No data available"); // Live pixel data when user hovers mouse on canvas
   const [drawing, setDrawing] = useState(false); // is user currently drawing
   const [visibleLoading, loadingOverlayHandler] = useDisclosure(true);
 
   // When canvas component has loaded, initialize everything
   useEffect(() => {
-    function setupSocketConnection() {
-      // setup socket after initializing canvas
-      socket.on("messageResponse", (data) => {
-        const row = Math.floor(data.position / canvasSizeInPixels);
-        const column = data.position % canvasSizeInPixels;
-        plotPixel(column, row, data.color);
-      });
-
-      socket.on("limit-exceeded", () => {
-        window.alert("Drawing limit exceeded. Please wait.");
-      });
-
-      socket.on("reset-canvas-order", () => {
-        // server gave order to clear canvas
-        const canvas = canvasRef.current;
-        if (!canvas) return;
-
-        const ctx = canvas.getContext("2d");
-        if (!ctx) return;
-
-        window.alert(
-          "An admin is clearing the canvas. Drawing is temporarily disabled for a few minutes."
-        );
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-      });
-
-      // ! connect AFTER defining events because server might send
-      // ! events on connection.
-      socket.connect();
-    }
-
     async function fetchCanvas() {
       console.log("Fetching canvas...");
       try {
@@ -76,7 +47,11 @@ export default function Canvas({ loggedIn, userData }: pageProps) {
 
         if (response.ok) {
           // no error
-          console.log("Done");
+          console.assert(
+            jsonObj.length === canvasSizeInPixels * canvasSizeInPixels
+          );
+          console.log("Done. First few elements are:", jsonObj.slice(0, 5));
+          setCanvasData(jsonObj);
           return jsonObj;
         }
 
@@ -87,7 +62,7 @@ export default function Canvas({ loggedIn, userData }: pageProps) {
       }
     }
 
-    function fillCanvas(colorArray: [string]) {
+    function fillCanvas(colorArray: string[]) {
       /**
        * Converts a 6-digit hex color to RGBA where the alpha value is set to 255.
        * @param hexColor event
@@ -111,17 +86,17 @@ export default function Canvas({ loggedIn, userData }: pageProps) {
       if (!ctx) return;
 
       const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      const canvasData = imgData.data;
+      const canvasImageData = imgData.data;
       const totalPixelCount = canvasSizeInPixels * canvasSizeInPixels;
 
       for (let p = 0; p < 4 * totalPixelCount; p += 4) {
         const pixelPosition = Math.floor(p / 4);
         const [r, g, b, a] = hexToRGBA(colorArray[pixelPosition]);
 
-        canvasData[p + 0] = r;
-        canvasData[p + 1] = g;
-        canvasData[p + 2] = b;
-        canvasData[p + 3] = a;
+        canvasImageData[p + 0] = r;
+        canvasImageData[p + 1] = g;
+        canvasImageData[p + 2] = b;
+        canvasImageData[p + 3] = a;
       }
 
       ctx.putImageData(imgData, 0, 0);
@@ -130,11 +105,10 @@ export default function Canvas({ loggedIn, userData }: pageProps) {
     (async () => {
       if (!loggedIn) return;
 
-      loadingOverlayHandler.open();
-      const canvasColorsArray = await fetchCanvas();
-      fillCanvas(canvasColorsArray);
-      setupSocketConnection();
-      loadingOverlayHandler.close();
+      loadingOverlayHandler.open(); // start loading animation
+      const colorArray = (await fetchCanvas()).map((p: Pixel) => p.color); // get an array of colors for canvas
+      fillCanvas(colorArray);
+      loadingOverlayHandler.close(); // stop loading animation
     })();
 
     return () => {
@@ -143,12 +117,64 @@ export default function Canvas({ loggedIn, userData }: pageProps) {
 
     // ! Do not include loadingOverlayHandler as hook dependency
     // ! as it causes a bug whereby the hook gets executed infinitely.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loggedIn]);
+
+  useEffect(() => {
+    function setupSocketConnection() {
+      // setup socket after initializing canvas
+
+      socket.on("messageResponse", (newPixel: Pixel) => {
+        // server is requesting client to update a pixel
+
+        // plot updated pixel
+        const row = Math.floor(newPixel.position / canvasSizeInPixels);
+        const column = newPixel.position % canvasSizeInPixels;
+        plotPixel(column, row, newPixel.color);
+
+        // update canvasData by replacing old pixel
+        // *NOTE: canvasData is already sorted by pixel position
+        const newCanvasData = canvasData.map((p) =>
+          p.position === newPixel.position ? newPixel : p
+        );
+
+        setCanvasData(newCanvasData);
+      });
+
+      socket.on("limit-exceeded", () => {
+        window.alert("Drawing limit exceeded. Please wait.");
+      });
+
+      socket.on("reset-canvas-order", () => {
+        // server gave order to clear canvas
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return;
+
+        window.alert(
+          "An admin is clearing the canvas. Drawing is temporarily disabled for a few minutes."
+        );
+        setCanvasData([]); // clear canvas data
+
+        // TODO: Fetch canvas data again
+        ctx.clearRect(0, 0, canvas.width, canvas.height); // clear html canvas
+      });
+
+      // ! connect AFTER defining events because server might send
+      // ! events on connection.
+      socket.connect();
+    }
+    setupSocketConnection();
+  }, [canvasData]);
 
   function handleDraw(e: React.MouseEvent<Element, MouseEvent>) {
     const [x, y] = getCanvasCursorCoordinates(e);
 
     // inform server of changes
+    // * No need to send author name and timestamp as these
+    // * information are already available in server
     socket.emit("message", {
       position: canvasSizeInPixels * y + x,
       color: selectedPixelColor,
@@ -224,10 +250,27 @@ export default function Canvas({ loggedIn, userData }: pageProps) {
    * Updates cursor coordinates
    * @param e Mouse event
    */
-  function displayLiveCoordinates(e: React.MouseEvent<Element, MouseEvent>) {
+  function displayLivePixelData(e: React.MouseEvent<Element, MouseEvent>) {
     const [x, y] = getCanvasCursorCoordinates(e);
-    const formattedString = `(${y}, ${x})`;
-    setCoordinates(formattedString);
+    const pixelData = canvasData[y * canvasSizeInPixels + x];
+
+    // check if data is defined
+    if (!pixelData) {
+      return setLivePixelData("No data available.");
+    }
+
+    // Restrict amount of data that is visible to Basic users
+    if (userData.type === "Basic") {
+      return setLivePixelData(`(${y}, ${x})`);
+    }
+
+    // display detailed pixel data to other users
+    const relativeDate = formatRelative(
+      new Date(pixelData.timestamp),
+      new Date()
+    );
+    const formattedString = `Pixel (${y}, ${x}) was last edited ${relativeDate} by ${pixelData.author}.`;
+    setLivePixelData(formattedString);
   }
 
   /**
@@ -254,10 +297,10 @@ export default function Canvas({ loggedIn, userData }: pageProps) {
       width={canvasSizeInPixels}
       onMouseEnter={(e) => {
         // mouse entered canvas
-        displayLiveCoordinates(e); // show live cursor coordinates
+        displayLivePixelData(e); // show live cursor coordinates
       }}
       onMouseMove={(e) => {
-        displayLiveCoordinates(e);
+        displayLivePixelData(e);
 
         if (drawing) {
           // plot pixels on right mouse hold
@@ -370,7 +413,7 @@ export default function Canvas({ loggedIn, userData }: pageProps) {
           </Stack>
         )}
       </TransformWrapper>
-      <Text fz={"md"}>{`Pixel position = ${coordinates}`}</Text>
+      <Text fz={"md"}>{livePixelData}</Text>
       {userData?.type === "Admin" && (
         <Button
           aria-label="Clear canvas"
