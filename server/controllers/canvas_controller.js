@@ -2,6 +2,8 @@ const asyncHandler = require("express-async-handler");
 const Pixel = require("../models/pixel");
 
 exports.pixels_data = asyncHandler(async (req, res, next) => {
+  console.log(req.session);
+
   if (!req.user) {
     return res.status(401).json({ error: "User is not authenticated" });
   }
