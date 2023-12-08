@@ -46,6 +46,7 @@ async function main() {
 
 // server setup
 app.set("port", port);
+app.set("trust proxy", true); // trust first proxy
 server.listen(port);
 server.on("error", (error) => {
   console.log(error);
