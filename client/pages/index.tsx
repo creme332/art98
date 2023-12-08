@@ -4,12 +4,21 @@ import classes from "../styles/HeroText.module.css";
 import Link from "next/link";
 import { loginDetails } from "../common/types";
 import { demoAccountCredentials } from "../common/constants";
+import { useState } from "react";
 
 interface pageProps {
   loginHandler: (details: loginDetails) => void;
 }
 
 export default function HomePage({ loginHandler }: pageProps) {
+  const [loading, setLoading] = useState(false);
+
+  async function loginToDemo() {
+    setLoading(true);
+    await loginHandler(demoAccountCredentials);
+    setLoading(false);
+  }
+
   return (
     <div className={classes.root}>
       <Container className={classes.wrapper}>
@@ -43,8 +52,9 @@ export default function HomePage({ loginHandler }: pageProps) {
             </Button>
 
             <Button
+              loading={loading}
               loaderProps={{ type: "dots" }}
-              onClick={() => loginHandler(demoAccountCredentials)}
+              onClick={loginToDemo}
               size="lg"
             >
               Try demo
