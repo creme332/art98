@@ -45,6 +45,8 @@ async function main() {
 }
 
 // server setup
+ // ! Must trust proxy for cookie to be set on client
+app.set("trust proxy", true);
 app.set("port", port);
 server.listen(port);
 server.on("error", (error) => {
