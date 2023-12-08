@@ -238,7 +238,8 @@ export default function Canvas({ loggedIn, userData }: pageProps) {
       new Date(pixelData.timestamp),
       new Date()
     );
-    const formattedString = `Pixel (${y}, ${x}) was last edited ${relativeDate} by ${pixelData.author}.`;
+    const pixelAuthor = pixelData.author || "deleted-user";
+    const formattedString = `Pixel (${y}, ${x}) was last edited ${relativeDate} by ${pixelAuthor}.`;
     setLivePixelData(formattedString);
   }
 
@@ -321,7 +322,7 @@ export default function Canvas({ loggedIn, userData }: pageProps) {
       <TransformWrapper
         initialScale={scale}
         onTransformed={handleScaleChange}
-        centerOnInit	
+        centerOnInit
         maxScale={20}
       >
         {({ zoomIn, zoomOut, resetTransform, ...rest }) => (
