@@ -89,6 +89,7 @@ export default function App({ Component, pageProps }: AppProps) {
       console.log(response);
 
       if (response.ok) {
+        console.log("Login successful");
         const userData = await getUserData();
         if (userData) {
           setLoggedIn(true);
