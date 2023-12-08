@@ -14,7 +14,7 @@ const { RateLimiterMemory } = require("rate-limiter-flexible");
 const passport = require("passport");
 const passportStrategy = require("./utils/passport").strategy;
 const session = require("express-session");
-const MongoStore = require("connect-mongo");
+// const MongoStore = require("connect-mongo");
 
 const User = require("./models/user");
 const Pixel = require("./models/pixel");
@@ -63,9 +63,9 @@ const sessionMiddleware = session({
   secret: process.env.SESSION_SECRET || "random-secret",
   resave: false, // don't save session if unmodified
   saveUninitialized: false, // don't create session until something stored
-  store: new MongoStore({
-    mongoUrl: process.env.MONGO_STRING,
-  }),
+  // store: new MongoStore({
+  //   mongoUrl: process.env.MONGO_STRING,
+  // }),
 });
 
 app.use(cors(corsOptions));
