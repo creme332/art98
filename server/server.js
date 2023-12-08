@@ -65,6 +65,8 @@ const sessionMiddleware = session({
   resave: false, // don't save session if unmodified
   saveUninitialized: false, // don't create session until something stored
   cookie: {
+    secure: true,
+    sameSite: "none",
     maxAge: 1000 * 60 * 60 * 24, // one day
   },
   // store: new MongoStore({
