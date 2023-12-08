@@ -90,6 +90,7 @@ export default function App({ Component, pageProps }: AppProps) {
 
       if (response.ok) {
         console.log("Login successful");
+        await new Promise((resolve) => setTimeout(resolve, 2000));
         const userData = await getUserData();
         if (userData) {
           setLoggedIn(true);
