@@ -14,7 +14,7 @@ const { RateLimiterMemory } = require("rate-limiter-flexible");
 const passport = require("passport");
 const passportStrategy = require("./utils/passport").strategy;
 const session = require("express-session");
-// const MongoStore = require("connect-mongo");
+const MongoStore = require("connect-mongo");
 
 const User = require("./models/user");
 const Pixel = require("./models/pixel");
@@ -46,7 +46,6 @@ async function main() {
 
 // server setup
 app.set("port", port);
-app.set("trust proxy", true); // trust first proxy
 server.listen(port);
 server.on("error", (error) => {
   console.log(error);
@@ -60,6 +59,13 @@ server.on("listening", () => {
 });
 
 // middlewares
+
+/**
+ * Session info
+ *
+ * Note: cookie info is not necessary for localhost development but
+ * essential when deploying: https://stackoverflow.com/a/75152794/17627866
+ */
 const sessionMiddleware = session({
   secret: process.env.SESSION_SECRET || "random-secret",
   resave: false, // don't save session if unmodified
@@ -67,11 +73,11 @@ const sessionMiddleware = session({
   cookie: {
     secure: true,
     sameSite: "none",
-    maxAge: 1000 * 60 * 60 * 24, // one day
+    maxAge: 7 * 1000 * 60 * 60 * 24, // one week
   },
-  // store: new MongoStore({
-  //   mongoUrl: process.env.MONGO_STRING,
-  // }),
+  store: new MongoStore({
+    mongoUrl: process.env.MONGO_STRING,
+  }),
 });
 
 app.use(cors(corsOptions));
