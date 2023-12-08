@@ -31,6 +31,7 @@ A real-time collaborative pixel art creation website built with MERN stack. This
 - Password hashing with bcrypt
 - Mobile-responsive UI
 - Server-side validation and sanitization
+- Guest sign-in functionality
 
 ## Installation
 > 🔴 **Prerequisites**: Git, Node.js, a cluster on MongoDB Atlas.
@@ -102,17 +103,9 @@ Open [http://localhost:3000](http://localhost:3000) in your browser to see runni
 
 
 ## To-do
-- [ ] Refactor socket stuffs out of server.js
-- [ ] Possible bug: clearing of canvas on mongodb takes 2 min. What if a user joins while canvas is being cleared?
-- [ ] Deployment
-  - [ ] Deploy frontend on vercel
-  - [ ] Deploy backend on render
-  - [ ] Update admin password
-  - [ ] Update backend URL value on server and client before deploying
-  - [ ] Add secrets to service
-  - [ ] Run lighthouse report
-- [ ] Add more privileges
-  - [ ] admin can use custom colors on top of color palette
+- [ ] Refactor `server.js`
+- [ ] Possible bug: What if a user joins while canvas is being cleared? (database does not clear canvas instantly)
+- [ ] Add new admin privilege: use custom colors on top of color palette
 - [ ] Add download canvas option
 - [ ] Rewrite backend in typescript
 
