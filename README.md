@@ -10,7 +10,9 @@ A real-time collaborative pixel art creation website built with MERN stack. This
 
 [Live Preview ▶](https://art98.vercel.app)
 
-> 🟡 **Note**: Website will take some time to load initially because the backend is hosted on the free tier of Render which causes the server shut down after 15 minutes of inactivity. If the website fails to load, you can check out [some screenshots of the project](screenshots).
+[View screenshots 📷](screenshots)
+
+> 🟡 **Note**: Actions such login and registering will take a few seconds to complete initially because the server spins down with inactivity and needs to spin back up after the first request. This is because the backend is hosted on a free instance type on Render.
 
 > 🔴 **Disclaimer**: The artwork displayed on this website is user-generated and collaborative. Some content might be inappropriate or offensive. Please be aware that the images presented do not necessarily reflect my views.
 
@@ -27,7 +29,7 @@ A real-time collaborative pixel art creation website built with MERN stack. This
 - Jamstack architecture
 - Session-based user authentication
 - Password hashing with bcrypt
-- Mobile-responsive
+- Mobile-responsive UI
 - Server-side validation and sanitization
 
 ## Installation
@@ -92,7 +94,7 @@ Open [http://localhost:3000](http://localhost:3000) in your browser to see runni
 
 > 🟢 **Tip**: To become a `Premium` user, you must enter the secret key `1234` during registration.
 
-- To draw a pixel on the canvas, you must **right-click** on a cell. 
+- To draw a pixel on the canvas, you must **right-click** on a cell. On a touchscreen, you must **tap a pixel and hold**. 
 - To move across the canvas, you must **drag** the canvas with left-click.
 - To zoom in/out the canvas, you can either use the buttons with the magnifier icons or use the scroll wheel on your mouse.
 - Hover on `x players online` to see names of currently online players.
