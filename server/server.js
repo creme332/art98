@@ -63,6 +63,9 @@ const sessionMiddleware = session({
   secret: process.env.SESSION_SECRET || "random-secret",
   resave: false, // don't save session if unmodified
   saveUninitialized: false, // don't create session until something stored
+  cookie: {
+    maxAge: 1000 * 60 * 60 * 24, // one day
+  },
   // store: new MongoStore({
   //   mongoUrl: process.env.MONGO_STRING,
   // }),
