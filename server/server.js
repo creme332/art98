@@ -45,7 +45,7 @@ async function main() {
 }
 
 // server setup
- // ! Must trust proxy for cookie to be set on client
+// ! Must trust proxy for cookie to be set on client
 app.set("trust proxy", true);
 app.set("port", port);
 server.listen(port);
@@ -62,6 +62,18 @@ server.on("listening", () => {
 
 // middlewares
 
+const cookieInfo =
+  process.env.NODE_ENV === "development"
+    ? {
+        // cookie used for localhost
+        maxAge: 7 * 1000 * 60 * 60 * 24, // one week
+      }
+    : {
+        // production cookie (does not work on localhost)
+        secure: true,
+        sameSite: "none",
+        maxAge: 7 * 1000 * 60 * 60 * 24, // one week
+      };
 /**
  * Session info
  *
@@ -72,11 +84,7 @@ const sessionMiddleware = session({
   secret: process.env.SESSION_SECRET || "random-secret",
   resave: false, // don't save session if unmodified
   saveUninitialized: false, // don't create session until something stored
-  cookie: {
-    secure: true,
-    sameSite: "none",
-    maxAge: 7 * 1000 * 60 * 60 * 24, // one week
-  },
+  cookie: cookieInfo,
   store: new MongoStore({
     mongoUrl: process.env.MONGO_STRING,
   }),
