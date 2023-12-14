@@ -1,4 +1,4 @@
-import { Title, Text, Button, Container } from "@mantine/core";
+import { Title, Text, Button, Container, Alert, Anchor } from "@mantine/core";
 import { Dots } from "../components/Dots";
 import classes from "../styles/HeroText.module.css";
 import Link from "next/link";
@@ -36,9 +36,23 @@ export default function HomePage({ loginHandler }: pageProps) {
           </Title>
           <Container p={0} size={600}>
             <Text size="lg" c="dimmed" className={classes.description}>
-              Inspired by r/place, this website features different users with
-              varying privileges.
+              Inspired by r/place, this open-source project supports different
+              users with varying privileges.
             </Text>
+            <Alert mt={40} variant="light" title="Note" color="violet">
+              This website uses cookies to make requests to the server. If
+              cookies are disabled on your browser or if you are using an
+              incognito tab, you will not be able to login. If you face login
+              problems, create an issue on{" "}
+              <Anchor
+                fw={800}
+                c={"violet"}
+                fz={"xs"}
+                href="https://github.com/creme332/art98/issues"
+              >
+                {`Github.`}
+              </Anchor>
+            </Alert>
           </Container>
           <div className={classes.controls}>
             <Button
