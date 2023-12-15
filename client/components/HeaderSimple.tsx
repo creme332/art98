@@ -23,14 +23,14 @@ interface headerProps {
 
 export default function HeaderSimple({ loggedIn, userType }: headerProps) {
   const [playerCount, setPlayerCount] = useState(0);
-  const [playerNames, setPlayerNames] = useState<[string] | null>(null);
+  const [playerNames, setPlayerNames] = useState<string[]>([]);
   const router = useRouter();
 
   useEffect(() => {
     // check if user logged in
     if (loggedIn) {
       socket.connect();
-      socket.on("online-usernames", (data) => {
+      socket.on("onlineUsernames", (data) => {
         setPlayerCount(data.length);
         setPlayerNames(data);
       });

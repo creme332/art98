@@ -98,12 +98,12 @@ export default function Canvas({ loggedIn, userData }: pageProps) {
       setCanvasData(newCanvasData);
     });
 
-    socket.on("limit-exceeded", () => {
+    socket.on("limitExceeded", () => {
       // client has exceeded rate limit.
       window.alert("Drawing limit exceeded. Please wait.");
     });
 
-    socket.on("reset-canvas-order", () => {
+    socket.on("resetCanvasResponse", () => {
       // server gave order to clear canvas
       const canvas = canvasRef.current;
       if (!canvas) return;
@@ -129,8 +129,8 @@ export default function Canvas({ loggedIn, userData }: pageProps) {
       // remove socket event listeners. Ref: https://stackoverflow.com/a/71920423/17627866
       // or use socket.removeAllListeners();
       socket.off("messageResponse");
-      socket.off("limit-exceeded");
-      socket.off("reset-canvas-order");
+      socket.off("limitExceeded");
+      socket.off("resetCanvasResponse");
     };
   }, [canvasData]);
 
@@ -258,7 +258,7 @@ export default function Canvas({ loggedIn, userData }: pageProps) {
     )
       return;
 
-    socket.emit("reset-canvas");
+    socket.emit("resetCanvas");
   }
 
   const canvasElement = (

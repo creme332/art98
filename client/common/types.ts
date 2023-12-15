@@ -23,35 +23,29 @@ export interface loginDetails {
 // Reference: https://socket.io/docs/v4/typescript/#types-for-the-server
 
 /**
+ * A minimalPixel is sent to server and remaining pixel attributes are added by server.
+ */
+export interface minimalPixel {
+  position: number;
+  color: string;
+}
+
+/**
  * Used when sending and broadcasting events on server or when receiving events on client.
  */
 export interface ServerToClientEvents {
-  noArg: () => void;
-  basicEmit: (a: number, b: string, c: Buffer) => void;
-  withAck: (d: string, callback: (e: number) => void) => void;
   messageResponse: (a: Pixel) => void;
-  userCount: (a: number) => void;
+  limitExceeded: () => void; // user exceeded drawing limit
+  resetCanvasResponse: () => void; // client is asked to clear his local canvas
+  onlineUsernames: (a: string[]) => void; // array of names of online users
 }
 
 /**
  * Used when receiving events on server or when sending events from client
  */
 export interface ClientToServerEvents {
-  message: (pixel: Pixel) => void;
+  message: (pixel: minimalPixel) => void; // send minimum info to server about pixel to be updated
+  resetCanvas: () => void; // request server to reset canvas. server may refuse request.
 }
 
-/**
- * Used for inter-server communication (added in socket.io@4.1.0)
- */
-export interface InterServerEvents {
-  ping: () => void;
-}
-
-/**
- * Used to type the socket.data attribute (added in socket.io@4.4.0)
- */
-export interface SocketData {
-  name: string;
-  age: number;
-}
-// -------  end of socketio types ----------
+// ------- end of socketio types ----------
