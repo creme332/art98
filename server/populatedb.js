@@ -16,12 +16,7 @@ const Canvas = require("./models/canvas");
 const createPixelsDebug = require("debug")("createPixels");
 const createUsersDebug = require("debug")("createUsers");
 const mongoDebug = require("debug")("mongo");
-
-/**
- * The greater the canvas size, the more time it will take to create
- * canvas and its respective pixels on MongoDB.
- */
-const canvasSize = 100; // ! Do not change. Canvas is 100x100 pixels
+const { canvasSize } = require("./utils/common");
 
 mongoose.set("strictQuery", false);
 

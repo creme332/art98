@@ -22,6 +22,8 @@ const Pixel = require("./models/pixel");
 const indexRouter = require("./routes/index");
 const authRouter = require("./routes/auth");
 
+const { colorValidator } = require("./utils/common");
+
 const frontendURL =
   process.env.NODE_ENV === "development"
     ? "http://localhost:3000"
@@ -207,7 +209,7 @@ function onOnlineUserChange(changedUser, joined) {
     onlineUsers = onlineUsers.filter((user) => user.id !== changedUser.id);
   }
   io.emit(
-    "online-usernames",
+    "onlineUsernames",
     onlineUsers.map((user) => user.name)
   );
 }
@@ -243,7 +245,9 @@ io.on("connection", (socket) => {
   // Listen to pixel changes
   socket.on("message", async (updatedPixel) => {
     // validate updatedPixel
-    if (updatedPixel.position === null || updatedPixel.color === null) return;
+    if (updatedPixel.position === null || !colorValidator(updatedPixel.color)) {
+      return;
+    }
 
     // if canvas is being cleared by an admin, prevent drawing
     if (canvasClearOngoing) return;
@@ -257,7 +261,7 @@ io.on("connection", (socket) => {
       if (rateLimitExceeded) {
         console.log("Limit exceeded");
         // inform user that his he has exceeded the rate limit
-        io.to(socket.id).emit("limit-exceeded");
+        io.to(socket.id).emit("limitExceeded");
         return;
       }
     }
@@ -296,7 +300,7 @@ io.on("connection", (socket) => {
     }
   });
 
-  socket.on("reset-canvas", async () => {
+  socket.on("resetCanvas", async () => {
     // Allow only admins to reset canvas
     if (connectedUser.type !== "Admin") return;
 
@@ -312,7 +316,7 @@ io.on("connection", (socket) => {
 
     // order clients to reset their respective canvas
     // * This approach is faster than emitting color for each pixel
-    io.emit("reset-canvas-order");
+    io.emit("resetCanvasResponse");
 
     // reset pixels in database
     await Pixel.updateMany(
