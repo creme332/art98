@@ -1,9 +1,10 @@
 const mongoose = require("mongoose");
 
 const Schema = mongoose.Schema;
+const { canvasSize } = require("../utils/common");
 
 const CanvasSchema = new Schema({
-  size: { type: Number, required: true, default: 300 },
+  size: { type: Number, required: true, default: canvasSize },
   pixels: [{ type: Schema.Types.ObjectId, ref: "Pixel" }],
 });
 
