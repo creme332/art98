@@ -3,6 +3,7 @@ export interface DotsProps extends React.ComponentPropsWithoutRef<"svg"> {
   radius?: number;
 }
 
+// Reference: https://ui.mantine.dev/category/hero/#hero-text
 export function Dots({ size = 185, radius = 2.5, ...others }: DotsProps) {
   return (
     <svg
