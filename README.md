@@ -4,13 +4,15 @@
 ![MongoDB](https://img.shields.io/badge/MongoDB-%234ea94b.svg?style=for-the-badge&logo=mongodb&logoColor=white)
 ![Express.js](https://img.shields.io/badge/express.js-%23404d59.svg?style=for-the-badge&logo=express&logoColor=%2361DAFB)
 
-A real-time collaborative pixel art creation website built with MERN stack. This project was inspired by [`r/place`](https://en.wikipedia.org/wiki/R/place).
+A real-time collaborative pixel art creation website built with MERN stack. This project was inspired by [`r/place`](https://en.wikipedia.org/wiki/R/place). Check out my [blog post](https://creme332.github.io/creamy-notes/posts/art98) to learn more about this project.
 
 ![GIF of website](screenshots/art98.gif)
 
 [Live Preview ▶](https://art98.vercel.app)
 
 [View screenshots 📷](screenshots)
+
+> 🔴 **Note**: art98 uses cookies to make requests to the server. If cookies are disabled on your browser or if you are using an incognito tab, you will not be able to login. 
 
 > 🟡 **Note**: Actions such login and registering will take a few seconds to complete initially because the server spins down with inactivity and needs to spin back up after the first request. This is because the backend is hosted on a free instance type on Render.
 
@@ -67,10 +69,11 @@ ADMIN_KEY="" # secret passkey needed to become admin user
 PREMIUM_KEY="" # secret passkey needed to become premium user
 ```
 
-Inside `server` directory, to populate your database:
+Navigate to the `server` directory and populate your database:
 ```bash
 npm run populate
 ```
+This should take 2-3 minutes.
 
 ## Usage
 In one terminal, start frontend:
@@ -104,7 +107,7 @@ Open [http://localhost:3000](http://localhost:3000) in your browser to see runni
 
 ## To-do
 - [ ] Refactor `server.js`
-- [ ] Possible bug: What if a user joins while canvas is being cleared? (database does not clear canvas instantly)
+- [ ] Add how to play section on website
 - [ ] Add new admin privilege: use custom colors on top of color palette
 - [ ] Add download canvas option
 - [ ] Rewrite backend in typescript
