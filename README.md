@@ -12,11 +12,14 @@ A real-time collaborative pixel art creation website built with MERN stack. This
 
 [View screenshots 📷](screenshots)
 
-> 🔴 **Note**: art98 uses cookies to make requests to the server. If cookies are disabled on your browser or if you are using an incognito tab, you will not be able to login. 
+> [!WARNING]
+> art98 uses cookies to make requests to the server. If cookies are disabled on your browser or if you are using an incognito tab, you will not be able to login. 
 
-> 🟡 **Note**: Actions such login and registering will take a few seconds to complete initially because the server spins down with inactivity and needs to spin back up after the first request. This is because the backend is hosted on a free instance type on Render.
+> [!WARNING]
+> Actions such login and registering will take a few seconds to complete initially because the server spins down with inactivity and needs to spin back up after the first request. This is because the backend is hosted on a free instance type on Render.
 
-> 🔴 **Disclaimer**: The artwork displayed on this website is user-generated and collaborative. Some content might be inappropriate or offensive. Please be aware that the images presented do not necessarily reflect my views.
+> [!CAUTION]
+> The artwork displayed on this website is user-generated and collaborative. Some content might be inappropriate or offensive. Please be aware that the images presented do not necessarily reflect my views.
 
 ## Features
 - Supports 3 types of users (`Basic`, `Premium`, `Admin`):
@@ -36,7 +39,9 @@ A real-time collaborative pixel art creation website built with MERN stack. This
 - Guest sign-in functionality
 
 ## Installation
-> 🔴 **Prerequisites**: Git, Node.js, a cluster on MongoDB Atlas.
+
+> [!IMPORTANT]
+> Prerequisites: Git, Node.js, a cluster on MongoDB Atlas.
 
 Install the project:
 ```bash
@@ -94,9 +99,12 @@ Open [http://localhost:3000](http://localhost:3000) in your browser to see runni
 
 ### How to play
 - You must first create an account and then login to your account.
-> 🟠 **Demo account**: To simply try out the website without any registration, you can click on the `Try demo` button on the homepage. However, this is not recommended as **anyone can access this account and use up the drawing limit**.
 
-> 🟢 **Tip**: To become a `Premium` user, you must enter the secret key `1234` during registration.
+> [!TIP]
+> To simply try out the website without any registration, you can click on the `Try demo` button on the homepage. However, this is not recommended as **anyone can access this account and use up the drawing limit**.
+
+> [!TIP]
+> To become a `Premium` user, you must enter the secret key `1234` during registration.
 
 - To draw a pixel on the canvas, you must **right-click** on a cell. On a touchscreen, you must **tap a pixel and hold**. 
 - To move across the canvas, you must **drag** the canvas with left-click.
