@@ -4,7 +4,7 @@
 ![MongoDB](https://img.shields.io/badge/MongoDB-%234ea94b.svg?style=for-the-badge&logo=mongodb&logoColor=white)
 ![Express.js](https://img.shields.io/badge/express.js-%23404d59.svg?style=for-the-badge&logo=express&logoColor=%2361DAFB)
 
-A real-time collaborative pixel art creation website built with MERN stack. This project was inspired by [`r/place`](https://en.wikipedia.org/wiki/R/place). Check out my [blog post](https://creme332.github.io/creamy-notes/posts/art98) to learn more about this project.
+A real-time collaborative pixel art creation website built with MERN stack. This project was inspired by [`r/place`](https://en.wikipedia.org/wiki/R/place). Check out my [blog post](https://creme332.github.io/posts/art-98/) to learn more about this project.
 
 ![GIF of website](screenshots/art98.gif)
 
